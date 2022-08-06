@@ -1,2 +1,2 @@
-# find_normal_vector_plane_pointcloud
-Find Normal Vector of a Plane in Point Cloud
+# Find Normal Vector of A Plane In Pointcloud
+
