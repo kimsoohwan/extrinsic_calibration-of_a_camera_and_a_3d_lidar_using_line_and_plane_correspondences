@@ -3,28 +3,41 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def show_point_cloud(point_cloud):
+def show_point_cloud(point_cloud, normal_vector=None):
     
     point_could_temp = np.vstack((point_cloud, point_cloud[0,:]))
     
     plt.figure()
     plt.autoscale(False)
     ax = plt.axes(projection='3d')
-    
+
     # plot calibration target
     ax.plot3D(point_could_temp[:, 0], point_could_temp[:, 1], point_could_temp[:, 2], 'gray', label='calibration target')
     
     # plot lidar
     ax.scatter3D(0, 0, 0, 'green', label='LiDAR')
     
+    # plot normal vector
+    if normal_vector is not None:
+        middle = np.mean(point_cloud, axis=0)
+        ax.scatter3D(middle[0], middle[1], middle[2], 'purple')
+        ax.plot3D([middle[0], middle[0]+normal_vector[0]*100],
+                  [middle[1], middle[1]+normal_vector[1]*100], [middle[2], middle[2]+normal_vector[2]*100],
+                  'red', label='Normal Vector')
+        
     ax.set_xlabel('X Axis')
     ax.set_ylabel('Y Axis')
     ax.set_zlabel('Z Axis')
 
     len_str = ""
     for point_index in range(len(point_could_temp)-1):
-        len_str += "{}, ".format(np.math.sqrt(np.sum((point_could_temp[point_index]-point_could_temp[point_index+1]) **2)))
-    plt.title(len_str)
+        len_str += "{:.2f} ".format(np.math.sqrt(np.sum((point_could_temp[point_index]-point_could_temp[point_index+1]) **2)))
+    
+    if normal_vector is None:
+        plt.title(len_str)
+    else:
+        plt.title("{}\n{}".format(len_str, normal_vector))
+
     plt.legend()
     
 
@@ -52,6 +65,70 @@ def get_rotation_matrix(rotation_vector):
 
     return rotation_matrix
 
+
+# intersection function
+def isect_line_plane_v3(p0, p1, p_co, p_no, epsilon=1e-6):
+    """
+    p0, p1: Define the line.
+    p_co, p_no: define the plane:
+        p_co Is a point on the plane (plane coordinate).
+        p_no Is a normal vector defining the plane direction;
+             (does not need to be normalized).
+
+    Return a Vector or None (when the intersection can't be found).
+    """
+
+    u = sub_v3v3(p1, p0)
+    dot = dot_v3v3(p_no, u)
+
+    if abs(dot) > epsilon:
+        # The factor of the point between p0 -> p1 (0 - 1)
+        # if 'fac' is between (0 - 1) the point intersects with the segment.
+        # Otherwise:
+        #  < 0.0: behind p0.
+        #  > 1.0: infront of p1.
+        w = sub_v3v3(p0, p_co)
+        fac = -dot_v3v3(p_no, w) / dot
+        u = mul_v3_fl(u, fac)
+        return add_v3v3(p0, u)
+
+    # The segment is parallel to plane.
+    return None
+
+def add_v3v3(v0, v1):
+    return (
+        v0[0] + v1[0],
+        v0[1] + v1[1],
+        v0[2] + v1[2],
+    )
+
+
+def sub_v3v3(v0, v1):
+    return (
+        v0[0] - v1[0],
+        v0[1] - v1[1],
+        v0[2] - v1[2],
+    )
+
+
+def dot_v3v3(v0, v1):
+    return (
+        (v0[0] * v1[0]) +
+        (v0[1] * v1[1]) +
+        (v0[2] * v1[2])
+    )
+
+
+def len_squared_v3(v0):
+    return dot_v3v3(v0, v0)
+
+
+def mul_v3_fl(v0, f):
+    return (
+        v0[0] * f,
+        v0[1] * f,
+        v0[2] * f,
+    )
 
 def generate_a_lidar_plane_in_3D(
         target_width=1000, 
@@ -97,27 +174,40 @@ def generate_a_lidar_plane_in_3D(
 
     # corners of target before translating and rotating
     target_init_corners = np.array([[0, target_width/2.0, target_height/2.0], [0, -target_width/2.0, target_height/2.0], [0, -target_width/2.0, -target_height/2.0], [0, target_width/2.0, -target_height/2.0]])
+    
+    # normal vector of plane
+    plane_normal = np.array([1, 0, 0])
+    
+    # display plane (calibration target)
     if display:
-        show_point_cloud(point_cloud=target_init_corners)
+        show_point_cloud(point_cloud=target_init_corners, normal_vector=plane_normal)
+
 
     # get rotation marix
     rotation_matrix = get_rotation_matrix(rotation_vector=rotation_vector)
-
+    
     # rotate target by rotation angels
     target_rotated_corners = np.dot(rotation_matrix, target_init_corners.T).T
+    
+    # rotate normal vector of plane (calibration target)
+    plane_normal = np.dot(rotation_matrix, plane_normal.T).T
+    plane_normal /= np.linalg.norm(plane_normal)
+    
     if display:
-        show_point_cloud(point_cloud=target_rotated_corners)
+        show_point_cloud(point_cloud=target_rotated_corners, normal_vector=plane_normal)
+
 
     # transform the target by tarnsform vector
     target_rotated_and_translated_corners = target_rotated_corners + translation_vector
     if display:
-        show_point_cloud(point_cloud=target_rotated_and_translated_corners)
+        show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal)
 
-    plt.show()
+    if display:
+        plt.show()
 
 if __name__ == '__main__':
     generate_a_lidar_plane_in_3D(
-                                    rotation_vector=np.array([10.0, 0.0, 0.0]), 
-                                    translation_vector=np.array([500.0, 200.0, 0.0]),
+                                    rotation_vector=np.array([10.0, 45.0, 10.0]), 
+                                    translation_vector=np.array([1000.0, 0.0, 0.0]),
                                     display=True
                                 )
