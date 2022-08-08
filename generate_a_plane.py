@@ -263,9 +263,17 @@ def generate_a_lidar_plane_in_3D(
     if display:
         plt.show()
 
+    return {'calibration_target_corners':target_rotated_and_translated_corners,
+            'normal_plane': plane_normal,
+            'lidar_point_without_noise':all_intersection, 
+            'lidar_point_with_noise':all_noisy_intersection}
+
 if __name__ == '__main__':
-    generate_a_lidar_plane_in_3D(
+
+    output_dic = generate_a_lidar_plane_in_3D(
                                     rotation_vector=np.array([45.0, 0.0, 0.0]), 
                                     translation_vector=np.array([5000.0, 0.0, 0.0]),
                                     display=True
                                 )
+
+    print(output_dic)
