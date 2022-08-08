@@ -1,5 +1,3 @@
-from array import array
-from tkinter.messagebox import NO
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
