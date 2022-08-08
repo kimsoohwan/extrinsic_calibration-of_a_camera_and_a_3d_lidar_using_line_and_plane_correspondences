@@ -42,17 +42,15 @@ def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, 
     if normal_vector is None:
         plt.title(title)
     else:
-        plt.title("{}\n{}".format(title, normal_vector))
+        plt.title("{}\nNormal: {}".format(title, normal_vector))
 
     plt.legend()
     
 
 def get_rotation_matrix(rotation_vector):
-
-    rotation_vector *= -1 
-
+ 
     # degree to radian
-    theta_x, theta_y, theta_z = rotation_vector * np.math.pi / 180.0
+    theta_x, theta_y, theta_z =  -1 * rotation_vector * np.math.pi / 180.0
 
     rx = np.array([[1, 0                   , 0],
                    [0, np.math.cos(theta_x), -np.math.sin(theta_x)], 
@@ -257,7 +255,7 @@ def generate_a_lidar_plane_in_3D(
 
 if __name__ == '__main__':
     generate_a_lidar_plane_in_3D(
-                                    rotation_vector=np.array([10.0, 45.0, 10.0]), 
+                                    rotation_vector=np.array([45.0, 0.0, 0.0]), 
                                     translation_vector=np.array([5000.0, 0.0, 0.0]),
                                     display=True
                                 )
