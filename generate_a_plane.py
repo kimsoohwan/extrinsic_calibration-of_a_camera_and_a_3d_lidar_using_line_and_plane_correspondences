@@ -139,18 +139,13 @@ def distance_two_points(point1, point2):
 
 def generate_a_lidar_plane_in_3D(
         target_width=1000, 
-        target_height=1000, 
-        max_number_of_ray=5, 
-        hor_distance=10, 
-        lidar_noise_type_x_dir='uniform',
-        lidar_noise_type_y_dir='uniform', lidar_uniform_error_y_dir=(-5, 5),
-        lidar_noise_type_z_dir='uniform', lidar_uniform_error_z_dir=(-5, 5),
+        target_height=1000,  
         translation_vector=np.array([0.0, 0.0, 0.0]),
         rotation_vector=np.array([0.0, 0.0, 0.0]),
         liadar_range=100000,
         horizontal_resolution=0.2,
         vertical_resolution=2,
-        range_accuracy=(-30, 30),
+        range_accuracy=30,
         horizontal_field_of_view = 360,
         vertical_field_of_view = 30,
         display=False
@@ -211,6 +206,7 @@ def generate_a_lidar_plane_in_3D(
 
     # all points on the palne (calibration target)
     all_intersection = []
+    all_noisy_intersection = []
 
     # calculate intersection of LiDAR rays to plane (calibation target)
     all_vertical_range = [-vertical_field_of_view/2 + vertical_resolution * v_r for v_r in range(int(np.math.ceil(vertical_field_of_view/vertical_resolution))+1)]
@@ -219,6 +215,9 @@ def generate_a_lidar_plane_in_3D(
     for z_range in all_vertical_range:
         for y_range in all_horizontal_range:
             
+            if y_range < 0:
+                continue
+
             # start of ray: lidar position
             start_ray = np.array([0, 0, 0])
 
@@ -242,12 +241,23 @@ def generate_a_lidar_plane_in_3D(
                             if np.dot(target_rotated_and_translated_corners[0, :]-target_rotated_and_translated_corners[3, :], intersection_pos-target_rotated_and_translated_corners[3, :]) >= 0:
                                 all_intersection.append(intersection_pos)
 
+                                # add noise to the intersection
+                                lidar_intersection_line = intersection_pos - start_ray
+                                lidar_intersection_line /= np.linalg.norm(lidar_intersection_line)
+                                intersection_pos_noisy = np.random.choice([-1, 1]) * lidar_intersection_line * np.random.uniform(low=-range_accuracy, high=range_accuracy) + intersection_pos
+
+                                all_noisy_intersection.append(intersection_pos_noisy)
+
     # reshape intersection points
-    if len(all_intersection) != 0:
+    if len(all_intersection) != 0 and display:
         all_intersection = np.array(all_intersection)
         all_intersection = np.reshape(all_intersection, newshape=(-1, 3))
 
-    show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_intersection, title='Intersection of LiDAR and Target')
+        all_noisy_intersection = np.array(all_noisy_intersection)
+        all_noisy_intersection = np.reshape(all_noisy_intersection, newshape=(-1, 3))
+
+        #show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_intersection, title='Intersection of LiDAR and Target, No Noise')
+        show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_noisy_intersection, title='Intersection of LiDAR and Target, With Noise')
 
 
     if display:
