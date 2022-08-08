@@ -256,7 +256,7 @@ def generate_a_lidar_plane_in_3D(
         all_noisy_intersection = np.array(all_noisy_intersection)
         all_noisy_intersection = np.reshape(all_noisy_intersection, newshape=(-1, 3))
 
-        #show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_intersection, title='Intersection of LiDAR and Target, No Noise')
+        show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_intersection, title='Intersection of LiDAR and Target, No Noise')
         show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_noisy_intersection, title='Intersection of LiDAR and Target, With Noise')
 
 
