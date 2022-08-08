@@ -10,15 +10,22 @@ def show_point_cloud(point_cloud):
     plt.figure()
     plt.autoscale(False)
     ax = plt.axes(projection='3d')
-    ax.plot3D(point_could_temp[:, 0], point_could_temp[:, 1], point_could_temp[:, 2], 'gray')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
+    
+    # plot calibration target
+    ax.plot3D(point_could_temp[:, 0], point_could_temp[:, 1], point_could_temp[:, 2], 'gray', label='calibration target')
+    
+    # plot lidar
+    ax.scatter3D(0, 0, 0, 'green', label='LiDAR')
+    
+    ax.set_xlabel('X Axis')
+    ax.set_ylabel('Y Axis')
+    ax.set_zlabel('Z Axis')
 
     len_str = ""
     for point_index in range(len(point_could_temp)-1):
         len_str += "{}, ".format(np.math.sqrt(np.sum((point_could_temp[point_index]-point_could_temp[point_index+1]) **2)))
     plt.title(len_str)
+    plt.legend()
     
 
 def get_rotation_matrix(rotation_vector):
@@ -62,6 +69,7 @@ def generate_a_lidar_plane_in_3D(
         range_accuracy=(-30, 30),
         horizontal_field_of_view = 360,
         vertical_field_of_view = 30,
+        display=False
     ):
     """
     target_width: Calibration width in 3D scence (mm)
@@ -89,23 +97,27 @@ def generate_a_lidar_plane_in_3D(
 
     # corners of target before translating and rotating
     target_init_corners = np.array([[0, target_width/2.0, target_height/2.0], [0, -target_width/2.0, target_height/2.0], [0, -target_width/2.0, -target_height/2.0], [0, target_width/2.0, -target_height/2.0]])
-    show_point_cloud(point_cloud=target_init_corners)
+    if display:
+        show_point_cloud(point_cloud=target_init_corners)
 
     # get rotation marix
     rotation_matrix = get_rotation_matrix(rotation_vector=rotation_vector)
 
     # rotate target by rotation angels
     target_rotated_corners = np.dot(rotation_matrix, target_init_corners.T).T
-    show_point_cloud(point_cloud=target_rotated_corners)
+    if display:
+        show_point_cloud(point_cloud=target_rotated_corners)
 
     # transform the target by tarnsform vector
     target_rotated_and_translated_corners = target_rotated_corners + translation_vector
-    show_point_cloud(point_cloud=target_rotated_and_translated_corners)
+    if display:
+        show_point_cloud(point_cloud=target_rotated_and_translated_corners)
 
     plt.show()
 
 if __name__ == '__main__':
     generate_a_lidar_plane_in_3D(
                                     rotation_vector=np.array([10.0, 0.0, 0.0]), 
-                                    translation_vector=np.array([500.0, 200.0, 0.0])
+                                    translation_vector=np.array([500.0, 200.0, 0.0]),
+                                    display=True
                                 )
