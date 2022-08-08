@@ -1,9 +1,11 @@
 from array import array
+from tkinter.messagebox import NO
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings("ignore")
 
-
-def show_point_cloud(point_cloud, normal_vector=None):
+def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, title=None):
     
     point_could_temp = np.vstack((point_cloud, point_cloud[0,:]))
     
@@ -24,7 +26,11 @@ def show_point_cloud(point_cloud, normal_vector=None):
         ax.plot3D([middle[0], middle[0]+normal_vector[0]*100],
                   [middle[1], middle[1]+normal_vector[1]*100], [middle[2], middle[2]+normal_vector[2]*100],
                   'red', label='Normal Vector')
-        
+
+    if intersection_points is not None:
+        ax.scatter3D(intersection_points[:, 0], intersection_points[:, 1], intersection_points[:, 2], 'blue', label='intersecion points')
+
+
     ax.set_xlabel('X Axis')
     ax.set_ylabel('Y Axis')
     ax.set_zlabel('Z Axis')
@@ -34,9 +40,9 @@ def show_point_cloud(point_cloud, normal_vector=None):
         len_str += "{:.2f} ".format(np.math.sqrt(np.sum((point_could_temp[point_index]-point_could_temp[point_index+1]) **2)))
     
     if normal_vector is None:
-        plt.title(len_str)
+        plt.title(title)
     else:
-        plt.title("{}\n{}".format(len_str, normal_vector))
+        plt.title("{}\n{}".format(title, normal_vector))
 
     plt.legend()
     
@@ -130,6 +136,9 @@ def mul_v3_fl(v0, f):
         v0[2] * f,
     )
 
+def distance_two_points(point1, point2):
+    return np.math.sqrt(np.sum((point1-point2)**2))
+
 def generate_a_lidar_plane_in_3D(
         target_width=1000, 
         target_height=1000, 
@@ -180,7 +189,7 @@ def generate_a_lidar_plane_in_3D(
     
     # display plane (calibration target)
     if display:
-        show_point_cloud(point_cloud=target_init_corners, normal_vector=plane_normal)
+        show_point_cloud(point_cloud=target_init_corners, normal_vector=plane_normal, title='Target at origin')
 
 
     # get rotation marix
@@ -194,13 +203,54 @@ def generate_a_lidar_plane_in_3D(
     plane_normal /= np.linalg.norm(plane_normal)
     
     if display:
-        show_point_cloud(point_cloud=target_rotated_corners, normal_vector=plane_normal)
+        show_point_cloud(point_cloud=target_rotated_corners, normal_vector=plane_normal, title='Target after rotaion: {}'.format(rotation_vector))
 
 
     # transform the target by tarnsform vector
     target_rotated_and_translated_corners = target_rotated_corners + translation_vector
     if display:
-        show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal)
+        show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, title='Target after translation: {}'.format(translation_vector))
+
+    # all points on the palne (calibration target)
+    all_intersection = []
+
+    # calculate intersection of LiDAR rays to plane (calibation target)
+    all_vertical_range = [-vertical_field_of_view/2 + vertical_resolution * v_r for v_r in range(int(np.math.ceil(vertical_field_of_view/vertical_resolution))+1)]
+    all_horizontal_range = [-horizontal_field_of_view/2 + horizontal_resolution * v_r for v_r in range(int(np.math.ceil(horizontal_field_of_view/horizontal_resolution))+1)]
+    
+    for z_range in all_vertical_range:
+        for y_range in all_horizontal_range:
+            
+            # start of ray: lidar position
+            start_ray = np.array([0, 0, 0])
+
+            # another point of ray
+            direction_ray = np.array([1, 0, 0])
+            ray_rotation_matrix = get_rotation_matrix(rotation_vector=np.array([0, z_range, y_range-90]))
+            direction_ray = np.dot(ray_rotation_matrix, direction_ray.T).T            
+            another_ray = start_ray + direction_ray
+
+            intersection_pos = isect_line_plane_v3(p0=start_ray, 
+                                                   p1=another_ray,
+                                                   p_co=target_rotated_and_translated_corners[0, :],
+                                                   p_no=plane_normal,
+                                                   epsilon=1e-6)
+
+            if intersection_pos is not None:
+                # check intersection is on plane (calibration target)
+                if np.dot(target_rotated_and_translated_corners[1, :]-target_rotated_and_translated_corners[0, :], intersection_pos-target_rotated_and_translated_corners[0, :]) >= 0:
+                    if np.dot(target_rotated_and_translated_corners[2, :]-target_rotated_and_translated_corners[1, :], intersection_pos-target_rotated_and_translated_corners[1, :]) >= 0:
+                        if np.dot(target_rotated_and_translated_corners[3, :]-target_rotated_and_translated_corners[2, :], intersection_pos-target_rotated_and_translated_corners[2, :]) >= 0:
+                            if np.dot(target_rotated_and_translated_corners[0, :]-target_rotated_and_translated_corners[3, :], intersection_pos-target_rotated_and_translated_corners[3, :]) >= 0:
+                                all_intersection.append(intersection_pos)
+
+    # reshape intersection points
+    if len(all_intersection) != 0:
+        all_intersection = np.array(all_intersection)
+        all_intersection = np.reshape(all_intersection, newshape=(-1, 3))
+
+    show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_intersection, title='Intersection of LiDAR and Target')
+
 
     if display:
         plt.show()
@@ -208,6 +258,6 @@ def generate_a_lidar_plane_in_3D(
 if __name__ == '__main__':
     generate_a_lidar_plane_in_3D(
                                     rotation_vector=np.array([10.0, 45.0, 10.0]), 
-                                    translation_vector=np.array([1000.0, 0.0, 0.0]),
+                                    translation_vector=np.array([5000.0, 0.0, 0.0]),
                                     display=True
                                 )
