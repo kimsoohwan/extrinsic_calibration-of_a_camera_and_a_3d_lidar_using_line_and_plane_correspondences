@@ -192,7 +192,7 @@ def generate_a_lidar_plane_in_3D(
     # rotate normal vector of plane (calibration target)
     plane_normal = np.dot(rotation_matrix, plane_normal.T).T
     plane_normal /= np.linalg.norm(plane_normal)
-    
+
     if display:
         show_point_cloud(point_cloud=target_rotated_corners, normal_vector=plane_normal, title='Target after rotaion: {}'.format(rotation_vector))
 
@@ -201,6 +201,9 @@ def generate_a_lidar_plane_in_3D(
     target_rotated_and_translated_corners = target_rotated_corners + translation_vector
     if display:
         show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, title='Target after translation: {}'.format(translation_vector))
+
+    d = -1 * (plane_normal[0] * target_rotated_and_translated_corners[0, 0] + plane_normal[1] * target_rotated_and_translated_corners[0, 1] + plane_normal[2] * target_rotated_and_translated_corners[0, 2])
+    plane_eqiotion = np.array([plane_normal[0], plane_normal[1], plane_normal[2], d])
 
     # all points on the palne (calibration target)
     all_intersection = []
@@ -263,6 +266,7 @@ def generate_a_lidar_plane_in_3D(
 
     return {'calibration_target_corners':target_rotated_and_translated_corners,
             'normal_plane': plane_normal,
+            'plane_equition': plane_eqiotion,
             'lidar_point_without_noise':all_intersection, 
             'lidar_point_with_noise':all_noisy_intersection}
 
