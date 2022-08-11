@@ -64,10 +64,12 @@ def ransac_plane_in_lidar(lidar_point, maximum_iteration=50000, inlier_ratio=0.9
 if __name__ == '__main__':
 
     output_dic = generate_a_lidar_plane_in_3D(
-                                    rotation_vector=np.array([45.0, 0.0, 0.0]), 
+                                    rotation_vector=np.array([45.0, 45.0, 0.0]), 
                                     translation_vector=np.array([5000.0, 0.0, 0.0]),
                                     display=False
                                 )
 
+    # call function to calculate plane equation
     best_ratio_plane = ransac_plane_in_lidar(lidar_point=output_dic['lidar_point_with_noise'])
+    print(output_dic['plane_equation'])
     print(best_ratio_plane)

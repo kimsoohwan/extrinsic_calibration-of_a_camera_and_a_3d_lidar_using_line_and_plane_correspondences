@@ -266,7 +266,7 @@ def generate_a_lidar_plane_in_3D(
 
     return {'calibration_target_corners':target_rotated_and_translated_corners,
             'normal_plane': plane_normal,
-            'plane_equition': plane_eqiotion,
+            'plane_equation': plane_eqiotion,
             'lidar_point_without_noise':all_intersection, 
             'lidar_point_with_noise':all_noisy_intersection}
 
