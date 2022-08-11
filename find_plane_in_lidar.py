@@ -29,7 +29,13 @@ def find_inliers(distance_points_to_plane, distance_to_be_inlier):
     return inliers_index
 
 def ransac_plane_in_lidar(lidar_point, maximum_iteration=50000, inlier_ratio=0.9, distance_to_be_inlier=10):
-
+    """
+    lidar_point: numpy array with shape of (n, 3), all measurements are in mm.
+    maximum_iteration: maximum iteration before halting the program.
+    inlier_ratio: it will stop algorithm if the 90% or more of data in point cloud considered as inliers. 
+    distance_to_be_inlier: if a point has a distance equal or less than this value, it will considered as inliers.
+    """
+    
     point_cloud_orginal = np.copy(lidar_point)
     
     best_ratio_plane = [0, None]
@@ -63,6 +69,7 @@ def ransac_plane_in_lidar(lidar_point, maximum_iteration=50000, inlier_ratio=0.9
 
 if __name__ == '__main__':
 
+    # generate an plane (point cloud)
     output_dic = generate_a_lidar_plane_in_3D(
                                     rotation_vector=np.array([45.0, 45.0, 0.0]), 
                                     translation_vector=np.array([5000.0, 0.0, 0.0]),
@@ -71,5 +78,7 @@ if __name__ == '__main__':
 
     # call function to calculate plane equation
     best_ratio_plane = ransac_plane_in_lidar(lidar_point=output_dic['lidar_point_with_noise'])
+    print('\nGround Truth Plane Equation:')
     print(output_dic['plane_equation'])
+    print('Calculated Plane Equation:')
     print(best_ratio_plane)
