@@ -42,7 +42,13 @@ def find_different_lines(point_cloud, min_distance=None):
                 dis.remove(min_1)
                 min_2 = np.min(dis)
                 
-                all_dis.append(min_2)
+                if min_1 > 150:
+                    continue
+
+                if min_1 *  9 < min_2:
+                    all_dis.append(min_1)
+                else:
+                    all_dis.append(min_2)
 
         print(all_dis)
 
@@ -76,7 +82,7 @@ def find_different_lines(point_cloud, min_distance=None):
 
     return lines_copy
 
-def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation):
+def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, display=False):
 
     # convert to numpy
     point_cloud = np.copy(lidar_points)
@@ -87,8 +93,10 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation):
     # find different lines
     lines = find_different_lines(point_cloud=projected_point_cloud)
 
-    show_point_cloud(point_cloud=projected_point_cloud)
-    show_point_cloud(point_cloud=lines)
+    if display == True:
+        show_point_cloud(point_cloud=point_cloud)
+        show_point_cloud(point_cloud=projected_point_cloud)
+        show_point_cloud(point_cloud=lines)
         
     plt.show()
 
@@ -98,11 +106,12 @@ if __name__ == '__main__':
     # generate an plane (point cloud)
     output_dic = generate_a_lidar_plane_in_3D(
                                     rotation_vector=np.array([45.0, 0.0, 0.0]), 
-                                    translation_vector=np.array([2000.0, 0.0, 0.0]),
+                                    translation_vector=np.array([5000.0, 0.0, 0.0]),
                                     display=False
                                 )
 
     # find plane equation
     best_ratio_plane = ransac_plane_in_lidar(lidar_point=output_dic['lidar_point_with_noise'])
     
-    find_edges_of_calibration_target_in_lidar(lidar_points=output_dic['lidar_point_with_noise'], plane_equation=best_ratio_plane['plane_equation'])
+    # find plane (calibration target) edges
+    find_edges_of_calibration_target_in_lidar(lidar_points=output_dic['lidar_point_with_noise'], plane_equation=best_ratio_plane['plane_equation'], display=True)

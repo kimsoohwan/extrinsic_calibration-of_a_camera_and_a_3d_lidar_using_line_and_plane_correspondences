@@ -8,7 +8,7 @@ def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, 
     if  isinstance(point_cloud, list):
         point_could_temp = []
         for sub_list in point_cloud:
-            point_could_temp.append(np.vstack((sub_list, sub_list[0,:])))
+            point_could_temp.append(sub_list)
     else:
         point_could_temp = np.vstack((point_cloud, point_cloud[0,:]))
     
@@ -45,7 +45,10 @@ def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, 
     if normal_vector is None:
         plt.title(title)
     else:
-        plt.title("{}\nNormal: {}".format(title, normal_vector))
+        if  isinstance(point_cloud, list):
+            plt.title("{}\nNormal: {}, Num Lines".format(title, normal_vector, len(point_cloud)))
+        else:
+            plt.title("{}\nNormal: {}".format(title, normal_vector))
 
     plt.legend()
     
