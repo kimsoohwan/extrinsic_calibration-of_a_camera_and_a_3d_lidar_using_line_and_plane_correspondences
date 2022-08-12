@@ -5,14 +5,23 @@ warnings.filterwarnings("ignore")
 
 def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, title=None):
     
-    point_could_temp = np.vstack((point_cloud, point_cloud[0,:]))
+    if  isinstance(point_cloud, list):
+        point_could_temp = []
+        for sub_list in point_cloud:
+            point_could_temp.append(np.vstack((sub_list, sub_list[0,:])))
+    else:
+        point_could_temp = np.vstack((point_cloud, point_cloud[0,:]))
     
     plt.figure()
     plt.autoscale(False)
     ax = plt.axes(projection='3d')
 
-    # plot calibration target
-    ax.plot3D(point_could_temp[:, 0], point_could_temp[:, 1], point_could_temp[:, 2], 'gray', label='calibration target')
+    if  isinstance(point_cloud, list):
+        for  sub_list in point_could_temp:
+            ax.plot3D(sub_list[:, 0], sub_list[:, 1], sub_list[:, 2], label='calibration target')
+    else:
+        # plot calibration target
+        ax.plot3D(point_could_temp[:, 0], point_could_temp[:, 1], point_could_temp[:, 2], 'gray', label='calibration target')
     
     # plot lidar
     ax.scatter3D(0, 0, 0, 'green', label='LiDAR')
@@ -32,10 +41,6 @@ def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, 
     ax.set_xlabel('X Axis')
     ax.set_ylabel('Y Axis')
     ax.set_zlabel('Z Axis')
-
-    len_str = ""
-    for point_index in range(len(point_could_temp)-1):
-        len_str += "{:.2f} ".format(np.math.sqrt(np.sum((point_could_temp[point_index]-point_could_temp[point_index+1]) **2)))
     
     if normal_vector is None:
         plt.title(title)
