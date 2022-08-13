@@ -4,6 +4,7 @@ from generate_a_plane import generate_a_lidar_plane_in_3D, show_point_cloud
 from find_plane_in_lidar import ransac_plane_in_lidar
 import matplotlib.pyplot as plt
 from find_line_in_lidar import ransac_line_in_lidar, map_point_to_line
+from copy import copy
 
 
 def distance_of_points_to_plane(point_cloud, plane_equation):
@@ -102,6 +103,59 @@ def find_points_on_left_right_border(lines):
 
     return {'left_points': points_on_left_border, 'right_points': points_on_right_border, 'border_point_cloud': all_points}
 
+def find_upper_and_lower_points_on_edges(points_on_left_border, points_on_right_border):
+
+    # sort points based in their z
+    points_on_left_border = sorted(points_on_left_border, key = lambda x: x[2])
+    points_on_right_border = sorted(points_on_right_border, key = lambda x: x[2])
+
+    if len(points_on_left_border) < 4 or len(points_on_right_border) < 4:
+        raise ValueError('Not enough points on borders to find lines.')
+
+    for set_idx, points_set in enumerate([points_on_left_border, points_on_right_border]):
+
+        upper_points = []
+        lower_points = []
+        
+        angel_vectors = [-2]
+        for i in range(1, len(points_set)-1):
+            vec_1 = points_set[i+1] - points_set[i]
+            vec_2 = points_set[i] - points_set[i - 1]
+
+            cos_two_vector = np.dot(vec_1, vec_2.T)/(np.linalg.norm(vec_1) * np.linalg.norm(vec_2))
+
+            angel_vectors.append(1-cos_two_vector)
+
+        
+        angel_vectors_copy = copy(angel_vectors)
+        max_1 = np.argmax(angel_vectors_copy)
+        angel_vectors_copy.remove(angel_vectors_copy[max_1])
+        max_2 = np.argmax(angel_vectors_copy)
+        
+        if np.abs(max_1 - max_2) == 1:
+            if max_1 > max_2:
+                break_point = max_2
+            else:
+                break_point = max_1
+        else:
+            break_point = max_1
+
+        for i in range(0, len(points_set)):
+
+            if i <= break_point:
+                lower_points.append(points_set[i])
+            else:
+                upper_points.append(points_set[i])
+                
+        if set_idx == 0:
+            left_lower_points = np.copy(lower_points)
+            left_upper_points = np.copy(upper_points)
+        else:
+            right_lower_points = np.copy(lower_points)
+            right_upper_points = np.copy(upper_points)
+
+    return {'left_lower_points': left_lower_points, 'left_upper_points': left_upper_points, 'right_lower_points': right_lower_points, 'right_upper_points': right_upper_points}
+
 def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, display=False):
 
     # convert to numpy
@@ -135,6 +189,9 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
 
     dic_point_border = find_points_on_left_right_border(list_point_mapped_on_lines)
 
+    # find point on upper and lower edges
+    edges_points = find_upper_and_lower_points_on_edges(points_on_left_border=dic_point_border['left_points'], points_on_right_border=dic_point_border['right_points'])
+
     if display == True:
         show_point_cloud(point_cloud=point_cloud)
         show_point_cloud(point_cloud=projected_point_cloud)
@@ -144,7 +201,8 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
         show_point_cloud(point_cloud=list_point_mapped_on_lines)
         show_point_cloud(point_cloud=dic_point_border['border_point_cloud'], marker='o')
         show_point_cloud(point_cloud=[point_cloud_mapped_on_lines, dic_point_border['border_point_cloud']], marker='o')
-        
+        show_point_cloud(point_cloud=[edges_points['left_lower_points'], edges_points['left_upper_points'], edges_points['right_lower_points'], edges_points['right_upper_points']], marker='o')
+
     plt.show()
 
 
@@ -153,7 +211,7 @@ if __name__ == '__main__':
     # generate an plane (point cloud)
     output_dic = generate_a_lidar_plane_in_3D(
                                     rotation_vector=np.array([45.0, 0.0, 0.0]), 
-                                    translation_vector=np.array([5000.0, 0.0, 0.0]),
+                                    translation_vector=np.array([2000.0, 0.0, 0.0]),
                                     display=False
                                 )
 
