@@ -29,6 +29,26 @@ def distance_of_points_to_line(point_cloud, line_eqiotion):
 
     return distance_points_to_line
 
+
+def map_point_to_line(point_cloud, line_eqiotion):
+    # distance of points in point cloud to the line
+    points_on_line = []
+
+    for point in point_cloud:
+
+        vec_1 = point - line_eqiotion[0]
+        point_on_line = line_eqiotion[0] + np.dot(vec_1, line_eqiotion[1])/np.dot(t, t.T)[0, 0] * line_eqiotion[1]
+
+        print(point_on_line)
+        print(point_on_line.shape)
+        print('=========')
+
+        points_on_line.append(point_on_line)
+
+    points_on_line = np.array(points_on_line)
+
+    return points_on_line
+
 def find_inliers(distance_points_to_line, distance_to_be_inlier):
     # find inliers
     inliers_index = np.argwhere(distance_points_to_line <= distance_to_be_inlier)
@@ -111,8 +131,11 @@ if __name__ == '__main__':
         point_cloud2.append(point)
     point_cloud2 = np.array(point_cloud2)
     
-    print(point_cloud.shape)
-    print(point_cloud2.shape)
-    
+    point_cloud3 = map_point_to_line(point_cloud, best_ratio_line['line_equation'])
+
     show_point_cloud([point_cloud, point_cloud2])
+    show_point_cloud(point_cloud3)
+    show_point_cloud([point_cloud, point_cloud3])
+    
+
     plt.show()
