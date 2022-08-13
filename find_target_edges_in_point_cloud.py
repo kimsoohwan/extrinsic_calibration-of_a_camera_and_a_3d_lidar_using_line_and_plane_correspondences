@@ -26,7 +26,7 @@ def map_points_to_plane(point_cloud, plane_equation):
     return projected_point_cloud
 
 
-def find_different_lines(point_cloud, min_distance=None):
+def find_different_lines(point_cloud, min_distance=None, maximim_distance_two_consecutive_points_in_ray=100):
     """
     point cloud
     min_distance: minimum distance for two points to be on the same line (mm). if it be None, it find it itself.
@@ -46,7 +46,7 @@ def find_different_lines(point_cloud, min_distance=None):
                 dis.remove(min_1)
                 min_2 = np.min(dis)
                 
-                if min_1 > 100 or min_2 > 100:
+                if min_1 > maximim_distance_two_consecutive_points_in_ray or min_2 > maximim_distance_two_consecutive_points_in_ray:
                     continue
 
                 if min_1 *  9 < min_2:
@@ -156,7 +156,17 @@ def find_upper_and_lower_points_on_edges(points_on_left_border, points_on_right_
 
     return {'left_lower_points': left_lower_points, 'left_upper_points': left_upper_points, 'right_lower_points': right_lower_points, 'right_upper_points': right_upper_points}
 
-def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, display=False):
+
+def generate_point_line(line_equation):
+    point_cloud = []
+    for step in np.linspace(start=-1000, stop=1000, num=200):
+        point = line_equation[0] + step * line_equation[1]
+        point_cloud.append(point)
+    point_cloud = np.array(point_cloud)
+
+    return point_cloud
+
+def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, display=False, maximim_distance_two_consecutive_points_in_ray=100):
 
     # convert to numpy
     point_cloud = np.copy(lidar_points)
@@ -165,7 +175,7 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     projected_point_cloud = map_points_to_plane(point_cloud=point_cloud, plane_equation=plane_equation)
 
     # find different lines
-    lines = find_different_lines(point_cloud=projected_point_cloud)
+    lines = find_different_lines(point_cloud=projected_point_cloud, maximim_distance_two_consecutive_points_in_ray=maximim_distance_two_consecutive_points_in_ray)
 
     # find equation of each line in 3D space
     lines_equations = []
@@ -192,19 +202,52 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     # find point on upper and lower edges
     edges_points = find_upper_and_lower_points_on_edges(points_on_left_border=dic_point_border['left_points'], points_on_right_border=dic_point_border['right_points'])
 
+    # find equation of edges
+    best_ratio_line_left_lower = ransac_line_in_lidar(lidar_point=edges_points['left_lower_points'])
+    best_ratio_line_left_upper = ransac_line_in_lidar(lidar_point=edges_points['left_upper_points'])
+    best_ratio_line_right_lower = ransac_line_in_lidar(lidar_point=edges_points['right_lower_points'])
+    best_ratio_line_right_upper = ransac_line_in_lidar(lidar_point=edges_points['right_upper_points'])
+
+    left_lower_equation = best_ratio_line_left_lower['line_equation']
+    left_upper_equation = best_ratio_line_left_upper['line_equation']
+    right_lower_equation = best_ratio_line_right_lower['line_equation']
+    right_upper_equation = best_ratio_line_right_upper['line_equation']
+
     if display == True:
-        show_point_cloud(point_cloud=point_cloud)
-        show_point_cloud(point_cloud=projected_point_cloud)
-        show_point_cloud(point_cloud=lines)
-        show_point_cloud(point_cloud=point_cloud_mapped_on_lines)
-        show_point_cloud(point_cloud=[*lines, point_cloud_mapped_on_lines])
-        show_point_cloud(point_cloud=list_point_mapped_on_lines)
-        show_point_cloud(point_cloud=dic_point_border['border_point_cloud'], marker='o')
-        show_point_cloud(point_cloud=[point_cloud_mapped_on_lines, dic_point_border['border_point_cloud']], marker='o')
-        show_point_cloud(point_cloud=[edges_points['left_lower_points'], edges_points['left_upper_points'], edges_points['right_lower_points'], edges_points['right_upper_points']], marker='o')
+        show_point_cloud(point_cloud=point_cloud, title='Input Point Cloud')
+        show_point_cloud(point_cloud=projected_point_cloud, title='Point Cloud Projected on Plane Equation')
+        show_point_cloud(point_cloud=lines, title='LiDAR Ray in Point Cloud')
+        show_point_cloud(point_cloud=point_cloud_mapped_on_lines, title='Point Cloud mapped on Line Equations')
+        show_point_cloud(point_cloud=[*lines, point_cloud_mapped_on_lines], title='Point Before and After Mapping to Line Equations')
+        show_point_cloud(point_cloud=list_point_mapped_on_lines, title='Point Cloud mapped on Line Equations')
+        show_point_cloud(point_cloud=[point_cloud_mapped_on_lines, dic_point_border['border_point_cloud']], marker='o', title='Points on Calibration Target Edges')
+        show_point_cloud(point_cloud=[edges_points['left_lower_points'], edges_points['left_upper_points'], edges_points['right_lower_points'], edges_points['right_upper_points']], marker='o', title='Left Lower, Left Upeer, Right Lower and Right Upper Points on Edges')
 
-    plt.show()
+        left_lower_pointcloud = generate_point_line(line_equation=left_lower_equation)
+        left_upper_pointcloud = generate_point_line(line_equation=left_upper_equation)
+        right_lower_pointcloud = generate_point_line(line_equation=right_lower_equation)
+        right_upper_pointcloud = generate_point_line(line_equation=right_upper_equation)
+        show_point_cloud(point_cloud=[point_cloud, left_lower_pointcloud, left_upper_pointcloud, right_lower_pointcloud, right_upper_pointcloud], title='Equation of Edges')
 
+        plt.show()
+
+    return {'line_equation_left_lower': left_lower_equation, 'line_equation_left_upper': left_upper_equation,
+            'line_equation_right_lower': right_lower_equation, 'line_equation_right_upper': right_upper_equation}
+
+
+def plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud, maximim_distance_two_consecutive_points_in_ray=100):
+    # find plane equation
+    best_ratio_plane = ransac_plane_in_lidar(lidar_point=lidar_point_cloud)
+    
+    # find plane's (calibration target) edges equation
+    dic_line_equations = find_edges_of_calibration_target_in_lidar(
+                                lidar_points=lidar_point_cloud,
+                                plane_equation=best_ratio_plane['plane_equation'],
+                                display=True,
+                                maximim_distance_two_consecutive_points_in_ray=100)
+
+    description = 'plane equation: ax+by+cz+d=0, each line equation: p0 a pont on line and t the direction vector'
+    return {'plane_equatoion': best_ratio_plane['plane_equation'], 'edges_equation':dic_line_equations, 'description':description}
 
 if __name__ == '__main__':
 
@@ -215,8 +258,9 @@ if __name__ == '__main__':
                                     display=False
                                 )
 
-    # find plane equation
-    best_ratio_plane = ransac_plane_in_lidar(lidar_point=output_dic['lidar_point_with_noise'])
-    
-    # find plane (calibration target) edges
-    find_edges_of_calibration_target_in_lidar(lidar_points=output_dic['lidar_point_with_noise'], plane_equation=best_ratio_plane['plane_equation'], display=True)
+    # find plane and edges equation
+    plane_edges_equation = plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud=output_dic['lidar_point_with_noise'],
+                                                                               maximim_distance_two_consecutive_points_in_ray=100)
+
+    print('Plane and Edges equations:')
+    print(plane_edges_equation)
