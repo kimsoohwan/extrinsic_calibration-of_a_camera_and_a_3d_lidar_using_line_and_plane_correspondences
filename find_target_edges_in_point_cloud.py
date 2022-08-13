@@ -235,7 +235,7 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
             'line_equation_right_lower': right_lower_equation, 'line_equation_right_upper': right_upper_equation}
 
 
-def plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud, maximim_distance_two_consecutive_points_in_ray=100):
+def plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud, maximim_distance_two_consecutive_points_in_ray=100, display=False):
     # find plane equation
     best_ratio_plane = ransac_plane_in_lidar(lidar_point=lidar_point_cloud)
     
@@ -243,7 +243,7 @@ def plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud, maxim
     dic_line_equations = find_edges_of_calibration_target_in_lidar(
                                 lidar_points=lidar_point_cloud,
                                 plane_equation=best_ratio_plane['plane_equation'],
-                                display=True,
+                                display=display,
                                 maximim_distance_two_consecutive_points_in_ray=100)
 
     description = 'plane equation: ax+by+cz+d=0, each line equation: p0 a pont on line and t the direction vector'
@@ -254,13 +254,14 @@ if __name__ == '__main__':
     # generate an plane (point cloud)
     output_dic = generate_a_lidar_plane_in_3D(
                                     rotation_vector=np.array([45.0, 0.0, 0.0]), 
-                                    translation_vector=np.array([2000.0, 0.0, 0.0]),
+                                    translation_vector=np.array([6000.0, 0.0, 0.0]),
                                     display=False
                                 )
 
     # find plane and edges equation
     plane_edges_equation = plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud=output_dic['lidar_point_with_noise'],
-                                                                               maximim_distance_two_consecutive_points_in_ray=100)
+                                                                               maximim_distance_two_consecutive_points_in_ray=100,
+                                                                               display=True)
 
     print('Plane and Edges equations:')
     print(plane_edges_equation)
