@@ -25,8 +25,6 @@ def map_points_to_plane(point_cloud, plane_equation):
     return projected_point_cloud
 
 
-
-
 def find_different_lines(point_cloud, min_distance=None):
     """
     point cloud
@@ -87,6 +85,23 @@ def find_different_lines(point_cloud, min_distance=None):
 
     return lines_copy
 
+def find_points_on_left_right_border(lines):
+    
+    points_on_left_border = []
+    points_on_right_border = []
+    
+    for line in lines:
+        # sory by y
+        line = sorted(line, key = lambda x: x[1])
+
+        points_on_left_border.append(line[0])
+        points_on_right_border.append(line[-1])
+
+    all_points = points_on_left_border + points_on_right_border
+    all_points = np.array(all_points)
+
+    return {'left_points': points_on_left_border, 'right_points': points_on_right_border, 'border_point_cloud': all_points}
+
 def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, display=False):
 
     # convert to numpy
@@ -104,7 +119,6 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
         best_ratio_line = ransac_line_in_lidar(lidar_point=line)
         lines_equations.append(best_ratio_line['line_equation'])
 
-
     # map noisy points of each line to the found line
     point_cloud_mapped_on_lines = None
     list_point_mapped_on_lines = []
@@ -119,6 +133,8 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
         
         list_point_mapped_on_lines.append(new_line)
 
+    dic_point_border = find_points_on_left_right_border(list_point_mapped_on_lines)
+
     if display == True:
         show_point_cloud(point_cloud=point_cloud)
         show_point_cloud(point_cloud=projected_point_cloud)
@@ -126,6 +142,8 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
         show_point_cloud(point_cloud=point_cloud_mapped_on_lines)
         show_point_cloud(point_cloud=[*lines, point_cloud_mapped_on_lines])
         show_point_cloud(point_cloud=list_point_mapped_on_lines)
+        show_point_cloud(point_cloud=dic_point_border['border_point_cloud'], marker='o')
+        show_point_cloud(point_cloud=[point_cloud_mapped_on_lines, dic_point_border['border_point_cloud']], marker='o')
         
     plt.show()
 

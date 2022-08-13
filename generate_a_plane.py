@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings("ignore")
 
-def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, title=None):
+def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, title=None, marker=None):
     
     if  isinstance(point_cloud, list):
         point_could_temp = []
@@ -21,8 +21,11 @@ def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, 
             ax.plot3D(sub_list[:, 0], sub_list[:, 1], sub_list[:, 2], label='calibration target')
     else:
         # plot calibration target
-        ax.plot3D(point_could_temp[:, 0], point_could_temp[:, 1], point_could_temp[:, 2], 'gray', label='calibration target')
-    
+        if marker is None:
+            ax.plot3D(point_could_temp[:, 0], point_could_temp[:, 1], point_could_temp[:, 2], 'gray', label='calibration target')
+        else:
+            ax.plot3D(point_could_temp[:, 0], point_could_temp[:, 1], point_could_temp[:, 2], 'gray', label='calibration target', marker=marker)
+
     # plot lidar
     ax.scatter3D(0, 0, 0, 'green', label='LiDAR')
     
