@@ -37,11 +37,7 @@ def map_point_to_line(point_cloud, line_eqiotion):
     for point in point_cloud:
 
         vec_1 = point - line_eqiotion[0]
-        point_on_line = line_eqiotion[0] + np.dot(vec_1, line_eqiotion[1])/np.dot(t, t.T)[0, 0] * line_eqiotion[1]
-
-        print(point_on_line)
-        print(point_on_line.shape)
-        print('=========')
+        point_on_line = line_eqiotion[0] + np.dot(vec_1, line_eqiotion[1])/np.dot(line_eqiotion[1], line_eqiotion[1].T) * line_eqiotion[1]
 
         points_on_line.append(point_on_line)
 
