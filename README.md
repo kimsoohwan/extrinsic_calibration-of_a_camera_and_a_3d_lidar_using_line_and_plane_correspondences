@@ -1,4 +1,4 @@
-# Find Normal Vector of A Plane In Pointcloud
+# Find Plane and lines Equation of A Plane In Pointcloud
 
 The code gets the dimension of the calibration target, a rotation, and a translation vector for moving the target with respect to the coordinate of LiDAR, characteristics of our LiDAR such as (maximum range, error, number of rays, angel between rays in the vertical and horizontal dimension, etc.). Then it calculates the intersection of LiDAR's rays and calibration target.
 
@@ -13,3 +13,8 @@ Step to find plane and line equations of calibration target's edges:
 -I found points of edges. Figure 7
 -I found points of left-lower, left-upper, right-lower, and right-upper edges of the calibration target, Figure 8
 -I found line equations for each edge of the calibration target with the RANSAC algorithm.
+
+# Find Points on Edges of Calibration Target in Camera Image
+
+The calibration target has yellow tape around itself. We detect a yellow border with color segmentation. Then we do post-processing and remove things, not on calibration target edges. The found border is tick, and we just keep points on outer parts that are precisely on the calibration target border. Then, we divide all points into four groups: points on the left-lower edge, left-upper edge, right-lower edge, and right-upper edge.
+
