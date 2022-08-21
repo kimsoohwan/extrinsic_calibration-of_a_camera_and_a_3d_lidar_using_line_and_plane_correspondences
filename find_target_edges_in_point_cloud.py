@@ -26,7 +26,7 @@ def map_points_to_plane(point_cloud, plane_equation):
     return projected_point_cloud
 
 
-def find_different_lines(point_cloud, min_distance=None, maximim_distance_two_consecutive_points_in_ray=100):
+def find_different_lines_2(point_cloud, min_distance=None, maximim_distance_two_consecutive_points_in_ray=100):
     """
     point cloud
     min_distance: minimum distance for two points to be on the same line (mm). if it be None, it find it itself.
@@ -53,7 +53,7 @@ def find_different_lines(point_cloud, min_distance=None, maximim_distance_two_co
                     all_dis.append(min_1)
                 else:
                     all_dis.append(min_2)
-
+                
         #print(all_dis)
 
         min_distance = np.max(all_dis)
@@ -85,6 +85,30 @@ def find_different_lines(point_cloud, min_distance=None, maximim_distance_two_co
                 lines_copy.append(np.array(line))
 
     return lines_copy
+
+
+def find_different_lines(point_cloud):
+
+    all_points = point_cloud.tolist()
+
+    # sort according to z
+    all_points = sorted(all_points, key = lambda x: x[2])
+
+    lines = []
+    line = []
+    for point in all_points:
+        if len(line) > 0:
+            if (point[2] - line[-1][2]) > 100:
+                if len(line) > 4:
+                    lines.append(np.array(line))
+                line = []
+        line.append(point) 
+    
+    if len(line) > 4:
+        lines.append(np.array(line))
+    line = []
+
+    return lines
 
 def find_points_on_left_right_border(lines):
     
@@ -175,7 +199,8 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     projected_point_cloud = map_points_to_plane(point_cloud=point_cloud, plane_equation=plane_equation)
 
     # find different lines
-    lines = find_different_lines(point_cloud=projected_point_cloud, maximim_distance_two_consecutive_points_in_ray=maximim_distance_two_consecutive_points_in_ray)
+    #lines = find_different_lines(point_cloud=projected_point_cloud, maximim_distance_two_consecutive_points_in_ray=maximim_distance_two_consecutive_points_in_ray)
+    lines = find_different_lines(point_cloud=projected_point_cloud)
 
     # find equation of each line in 3D space
     lines_equations = []
@@ -251,10 +276,13 @@ def plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud, maxim
 
 if __name__ == '__main__':
 
+    ########################################
+    # generated data example
+    ########################################
     # generate an plane (point cloud)
     output_dic = generate_a_lidar_plane_in_3D(
                                     rotation_vector=np.array([45.0, 0.0, 0.0]), 
-                                    translation_vector=np.array([6000.0, 0.0, 0.0]),
+                                    translation_vector=np.array([8000.0, 0.0, 0.0]),
                                     display=False
                                 )
 
@@ -263,5 +291,20 @@ if __name__ == '__main__':
                                                                                maximim_distance_two_consecutive_points_in_ray=100,
                                                                                display=True)
 
+    print('Plane and Edges equations:')
+    print(plane_edges_equation)
+
+    #######################################
+    # Real Data example
+    #######################################
+    point_cloud = np.load('example_real_img_lidar_points/selected_points_in_lidar.npy')
+    # convert to mm
+    point_cloud *= 1000
+
+    # find plane and edges equation
+    plane_edges_equation = plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud=point_cloud,
+                                                                               maximim_distance_two_consecutive_points_in_ray=100,
+                                                                               display=True)
+    
     print('Plane and Edges equations:')
     print(plane_edges_equation)
