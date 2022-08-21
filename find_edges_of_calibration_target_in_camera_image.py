@@ -89,31 +89,33 @@ def find_points_on_edges(img):
 
 if __name__ == '__main__':
 
-    # read image
-    img_bgr = cv2.imread('./sample_imgs/yellow-2.jpg')
-
-    # convert BGR to HSV
-    hsvImage = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
     
-    # separate yellow color from other parts
-    color_masked_img = segment_yellow_color(img=hsvImage)
-    
-    # find the biggest connected  component
-    bigest_component = find_biggest_connected_component(img=color_masked_img)
+    for img_path in ['./sample_imgs/yellow-2.jpg', '/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-1.png', '/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-2.png']:
+        # read image
+        img_bgr = cv2.imread(img_path)
 
-    points_on_edges = find_points_on_edges(img=bigest_component)
+        # convert BGR to HSV
+        hsvImage = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+        
+        # separate yellow color from other parts
+        color_masked_img = segment_yellow_color(img=hsvImage)
+        
+        # find the biggest connected  component
+        bigest_component = find_biggest_connected_component(img=color_masked_img)
 
-    plt.figure()
-    plt.imshow(hsvImage, cmap = 'gray', interpolation = 'bicubic')
-    plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
+        points_on_edges = find_points_on_edges(img=bigest_component)
 
-    plt.figure()
-    plt.imshow(color_masked_img, cmap = 'gray', interpolation = 'bicubic')
-    plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
+        #plt.figure()
+        #plt.imshow(hsvImage, cmap = 'gray', interpolation = 'bicubic')
+        #plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
 
-    plt.figure()
-    plt.imshow(bigest_component, cmap = 'gray', interpolation = 'bicubic')
-    plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
+        #plt.figure()
+        #plt.imshow(color_masked_img, cmap = 'gray', interpolation = 'bicubic')
+        #plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
+
+        plt.figure()
+        plt.imshow(bigest_component, cmap = 'gray', interpolation = 'bicubic')
+        plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
 
     plt.show()
 
