@@ -10,7 +10,8 @@ def find_corners_on_calibration_target(img, num_row, num_col, square, display=Fa
     num_col: number of inside corners in col direction
     square: len of each calibration target square in mm
 
-    returned points are sorted from left to right and top to bottom
+    returned points are sorted from left to right and top to bottom, also return results is in opencv format (x, y, z),
+    x is in direction of horizon and y in direction of vertical axis
     """
     # termination criteria
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
