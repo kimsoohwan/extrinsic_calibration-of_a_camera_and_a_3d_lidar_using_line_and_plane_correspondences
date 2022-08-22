@@ -87,35 +87,56 @@ def find_points_on_edges(img):
     return {'left_lower_edge_points': left_lower_edge_points, 'left_upper_edge_points': left_upper_edge_points, 
             'right_lower_edge_points': right_lower_edge_points, 'right_upper_edge_points': right_upper_edge_points,}
 
-if __name__ == '__main__':
 
-    
-    for img_path in ['./sample_imgs/yellow-2.jpg', '/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-1.png', '/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-2.png']:
-        # read image
-        img_bgr = cv2.imread(img_path)
-
-        # convert BGR to HSV
-        hsvImage = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+def points_on_four_edges_calibration_target_camera_image(rgb_image, display=False):
+    # convert RGB to HSV
+    hsvImage = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
         
-        # separate yellow color from other parts
-        color_masked_img = segment_yellow_color(img=hsvImage)
+    # separate yellow color from other parts
+    color_masked_img = segment_yellow_color(img=hsvImage)
         
-        # find the biggest connected  component
-        bigest_component = find_biggest_connected_component(img=color_masked_img)
+    # find the biggest connected  component
+    bigest_component = find_biggest_connected_component(img=color_masked_img)
 
-        points_on_edges = find_points_on_edges(img=bigest_component)
+    points_on_edges = find_points_on_edges(img=bigest_component)
 
-        #plt.figure()
-        #plt.imshow(hsvImage, cmap = 'gray', interpolation = 'bicubic')
-        #plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
+    if display == True:
+        plt.figure()
+        plt.imshow(hsvImage, cmap = 'gray', interpolation = 'bicubic')
+        plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
 
-        #plt.figure()
-        #plt.imshow(color_masked_img, cmap = 'gray', interpolation = 'bicubic')
-        #plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
+        plt.figure()
+        plt.imshow(color_masked_img, cmap = 'gray', interpolation = 'bicubic')
+        plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
 
         plt.figure()
         plt.imshow(bigest_component, cmap = 'gray', interpolation = 'bicubic')
         plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
 
-    plt.show()
+        bigest_component = bigest_component / 3
+        for key_i in points_on_edges:
+            for point in points_on_edges[key_i]:
+                bigest_component[point[0], point[1]] = 1
+
+        plt.figure()
+        plt.imshow(bigest_component, cmap = 'gray', interpolation = 'bicubic')
+        plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
+
+        plt.show()
+
+
+    return points_on_edges
+
+if __name__ == '__main__':
+
+    for img_path in ['./sample_imgs/yellow-2.jpg', '/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-1.png', '/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-2.png']:
+        # read image
+        img_bgr = cv2.imread(img_path)
+
+        # convert BGR to RGB
+        rgb_image = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+
+        edges_points = points_on_four_edges_calibration_target_camera_image(rgb_image=rgb_image, display=True)
+
+
 
