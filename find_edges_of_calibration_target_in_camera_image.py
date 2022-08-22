@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from find_line_equation_in_image import ransac_line_in_image
+from copy import copy
+
 
 def segment_yellow_color(img):
     """
@@ -127,16 +130,68 @@ def points_on_four_edges_calibration_target_camera_image(rgb_image, display=Fals
 
     return points_on_edges
 
+def line_equation_four_edges_calibration_target_in_camera_image(rgb_image, display=False):
+    """
+    the return lines equations are in opencv format
+    """
+    # extract points of four edges
+    edges_points = points_on_four_edges_calibration_target_camera_image(rgb_image=rgb_image, display=display)
+
+    lines_equations = {} 
+    for edge_name in edges_points:
+        # points on an edge
+        points = edges_points[edge_name]
+
+        # convert (row, col) points to (x, y) in OpenCV
+        points = np.array(points)
+        points[:, [1, 0]] = points[:, [0, 1]]
+
+        # find line eqution (point of line, direction)
+        best_ratio_line = ransac_line_in_image(lidar_point=points, 
+                                               maximum_iteration=800, 
+                                               inlier_ratio=0.9,
+                                               distance_to_be_inlier=1)
+
+        line_equation = best_ratio_line['line_equation']
+
+        if edge_name == 'left_lower_edge_points':
+            lines_equations['left_lower_edge_equation'] = copy(line_equation)
+        elif edge_name == 'left_upper_edge_points':
+            lines_equations['left_upper_edge_equation'] = copy(line_equation)
+        elif edge_name == 'right_lower_edge_points':
+            lines_equations['right_lower_edge_equation'] = copy(line_equation)
+        elif edge_name == 'right_upper_edge_points':
+            lines_equations['right_upper_edge_equation'] = copy(line_equation)
+        else:
+            raise ValueError('Name of edge is not correct')
+
+    return lines_equations
+
+
 if __name__ == '__main__':
 
-    for img_path in ['./sample_imgs/yellow-2.jpg', '/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-1.png', '/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-2.png']:
+    for img_path in ['/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-1.png']:
         # read image
         img_bgr = cv2.imread(img_path)
 
         # convert BGR to RGB
         rgb_image = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
-        edges_points = points_on_four_edges_calibration_target_camera_image(rgb_image=rgb_image, display=True)
 
+        lines_equations = line_equation_four_edges_calibration_target_in_camera_image(rgb_image=rgb_image, display=True)
 
+        print('all line equations for four edges of calibration target')
+        print(lines_equations)
 
+        plt.figure()
+        plt.imshow(rgb_image)
+        for line_name in lines_equations:
+            point_cloud2 = []
+            for step in np.linspace(start=-400, stop=400, num=50):
+                point = lines_equations[line_name][0] + step * lines_equations[line_name][1]
+                point_cloud2.append(point)
+
+            point_cloud2 = np.array(point_cloud2)
+            plt.plot(point_cloud2[:, 0], point_cloud2[:, 1])
+        
+        plt.show()

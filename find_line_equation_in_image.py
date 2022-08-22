@@ -1,5 +1,4 @@
 import numpy as np
-from generate_a_plane import show_point_cloud
 import matplotlib.pyplot as plt
 
 
@@ -77,6 +76,7 @@ def ransac_line_in_image(lidar_point, maximum_iteration=8000, inlier_ratio=0.9, 
                 break
 
     return {'inlier_to_all_data_ratio':best_ratio_line[0], 'line_equation':best_ratio_line[1]}
+
 
 if __name__ == '__main__':
 
