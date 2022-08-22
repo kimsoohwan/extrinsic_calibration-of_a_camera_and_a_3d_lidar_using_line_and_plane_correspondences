@@ -22,10 +22,6 @@ def find_corners_on_calibration_target(img, num_row, num_col, square, display=Fa
     objp[:,:2] = np.mgrid[0:num_col,0:num_row].T.reshape(-1,2)
     objp *= square
 
-    # Arrays to store object points and image points from all the images.
-    objpoints = [] # 3d point in real world space
-    imgpoints = [] # 2d points in image plane.
-
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
@@ -45,6 +41,9 @@ def find_corners_on_calibration_target(img, num_row, num_col, square, display=Fa
             plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
             plt.show()
 
+        corners = np.reshape(corners, newshape=(corners.shape[0], 2))
+        corners2 = np.reshape(corners2, newshape=(corners2.shape[0], 2))
+     
         return {'points_in_3D': objp, 'points_in_image': corners, 'points_in_image_sub_pixel': corners2}
     else:
         return None
