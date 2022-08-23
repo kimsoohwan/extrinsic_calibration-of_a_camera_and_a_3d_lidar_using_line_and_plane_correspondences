@@ -207,7 +207,6 @@ if __name__ == '__main__':
             print('Line equation (homogenous format):\n {}'.format(
                                                             conver_2d_line_equation_to_homogenous_format(line_equation=lines_equations[line_name]))
                                                         )
-            print(np.dot(np.hstack((lines_equations[line_name][0], 1)), conver_2d_line_equation_to_homogenous_format(line_equation=lines_equations[line_name])))
 
         plt.figure()
         plt.imshow(rgb_image)
