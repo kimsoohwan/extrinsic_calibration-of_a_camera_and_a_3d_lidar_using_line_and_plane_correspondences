@@ -167,6 +167,25 @@ def line_equation_four_edges_calibration_target_in_camera_image(rgb_image, displ
 
     return lines_equations
 
+def conver_2d_line_equation_to_homogenous_format(line_equation):
+    """
+    It gets a 2d line equation in format (point, direction) to  
+    homogenous format ax+by+c=0: (a, b, c)
+    """
+    point_1 = line_equation[0] + 1 * line_equation[1]
+    point_2 = line_equation[0] + 2 * line_equation[1]
+
+    m = (point_2[1]-point_1[1]) / (point_2[0]-point_1[0])
+
+    a = -m
+    b = 1
+    c = m * point_1[0] - point_1[1]
+
+    homogeneous_equation = np.array([[a], [b], [c]])
+    homogeneous_equation = homogeneous_equation / np.linalg.norm(homogeneous_equation)
+
+    return homogeneous_equation
+
 
 if __name__ == '__main__':
 
@@ -181,7 +200,14 @@ if __name__ == '__main__':
         lines_equations = line_equation_four_edges_calibration_target_in_camera_image(rgb_image=rgb_image, display=True)
 
         print('all line equations for four edges of calibration target')
-        print(lines_equations)
+        for line_name in lines_equations:
+            print('=' * 100)
+            print('Line name: {}'.format(line_name))
+            print('Line equation (point, direction): {}'.format(lines_equations[line_name]))
+            print('Line equation (homogenous format):\n {}'.format(
+                                                            conver_2d_line_equation_to_homogenous_format(line_equation=lines_equations[line_name]))
+                                                        )
+            print(np.dot(np.hstack((lines_equations[line_name][0], 1)), conver_2d_line_equation_to_homogenous_format(line_equation=lines_equations[line_name])))
 
         plt.figure()
         plt.imshow(rgb_image)
