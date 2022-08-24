@@ -18,8 +18,9 @@ def find_intersection_of_ray_plane(image_point, plane, camera_matrix):
     p_norm = np.dot(np.linalg.inv(camera_matrix), p)
     p_norm /= p_norm[2, 0]
 
-    t = (plane[3]) / (plane[0] * p_norm[0, 0] + plane[1] * p_norm[1, 0] + plane[3] * 1)
+    t = -(plane[3]) / (plane[0] * p_norm[0, 0] + plane[1] * p_norm[1, 0] + plane[2] * 1)
 
+    # intersection point in camera coordinate
     point_intersection = t * p_norm
 
     return point_intersection
