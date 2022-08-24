@@ -34,7 +34,7 @@ def find_corners_on_calibration_target(img, num_row, num_col, square, display=Fa
         
         if display == True:
             # Draw and display the corners
-            cv.drawChessboardCorners(img, (num_col, num_row), corners2, ret)
+            cv.drawChessboardCorners(np.copy(img), (num_col, num_row), corners2, ret)
             plt.figure()
             plt.imshow(img, cmap = 'gray', interpolation = 'bicubic')
             plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
