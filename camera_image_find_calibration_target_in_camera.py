@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def find_corners_on_calibration_target(img, num_row, num_col, square, display=False):
     """
-    img: image that contain calibration target
+    img: image that contain calibration target (RGB image)
     num_row: number of inside corners in row direction
     num_col: number of inside corners in col direction
     square: len of each calibration target square in mm
@@ -16,13 +16,12 @@ def find_corners_on_calibration_target(img, num_row, num_col, square, display=Fa
     # termination criteria
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-    
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     objp = np.zeros((num_row*num_col,3), np.float32)
     objp[:,:2] = np.mgrid[0:num_col,0:num_row].T.reshape(-1,2)
     objp *= square
 
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
     # Find the chess board corners
@@ -52,6 +51,7 @@ if __name__ == '__main__':
     
     # read image from file
     img = cv.imread('/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-1.png')
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
 
     # find corners on calibration target
     points_3d_image_image_subpix = find_corners_on_calibration_target(img=img, num_row=6, num_col=8, square=152, display=True)
