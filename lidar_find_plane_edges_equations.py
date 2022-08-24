@@ -23,19 +23,19 @@ if __name__ == '__main__':
     # generated data example
     ########################################
     # generate an plane (point cloud)
-    output_dic = generate_a_lidar_plane_in_3D(
-                                    rotation_vector=np.array([45.0, 0.0, 0.0]), 
-                                    translation_vector=np.array([8000.0, 0.0, 0.0]),
-                                    display=False
-                                )
+    #output_dic = generate_a_lidar_plane_in_3D(
+    #                                rotation_vector=np.array([45.0, 0.0, 0.0]), 
+    #                                translation_vector=np.array([8000.0, 0.0, 0.0]),
+    #                                display=False
+    #                            )
 
     # find plane and edges equation
-    plane_edges_equation = plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud=output_dic['lidar_point_with_noise'],
-                                                                               maximim_distance_two_consecutive_points_in_ray=100,
-                                                                               display=True)
+    #plane_edges_equation = plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud=output_dic['lidar_point_with_noise'],
+    #                                                                           maximim_distance_two_consecutive_points_in_ray=100,
+    #                                                                           display=True)
 
-    print('Plane and Edges equations:')
-    print(plane_edges_equation)
+    #print('Plane and Edges equations:')
+    #print(plane_edges_equation)
 
     #######################################
     # Real Data example 1
@@ -55,14 +55,14 @@ if __name__ == '__main__':
     #######################################
     # Real Data example 2
     #######################################
-    point_cloud = np.load('example_real_img_lidar_points/selected_points_in_lidar-2.npy')
+    #point_cloud = np.load('example_real_img_lidar_points/selected_points_in_lidar-2.npy')
     # convert to mm
-    point_cloud *= 1000
+    #point_cloud *= 1000
 
     # find plane and edges equation
-    plane_edges_equation = plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud=point_cloud,
-                                                                               maximim_distance_two_consecutive_points_in_ray=100,
-                                                                               display=True)
+    #plane_edges_equation = plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud=point_cloud,
+    #                                                                           maximim_distance_two_consecutive_points_in_ray=100,
+    #                                                                           display=True)
     
-    print('Plane and Edges equations:')
-    print(plane_edges_equation)
+    #print('Plane and Edges equations:')
+    #print(plane_edges_equation)
