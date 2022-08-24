@@ -76,8 +76,43 @@ def get_calibration_target_plane_equation_in_image(object_points, image_points, 
 
     return plane_equation
 
+
+def camera_coordinate_plane_equation_calibration_target(rgb_img, num_row, num_col, square, camera_matrix, distortion_coefficients, display=False):
+    """
+    Find plane equation of a calibration target inside and image. The plane equation is in camera coordinate system and in 
+    homogenous format
+    """
+    
+    # find corners on calibration target
+    points_3d_image_image_subpix = find_corners_on_calibration_target(
+                                        img=rgb_img,
+                                        num_row=num_row,
+                                        num_col=num_col,
+                                        square=square,
+                                        display=display)
+
+    # find plane equation of calibtarion target inside image
+    plane_equation = get_calibration_target_plane_equation_in_image(
+                                object_points=points_3d_image_image_subpix['points_in_3D'],
+                                image_points=points_3d_image_image_subpix['points_in_image_sub_pixel'],
+                                camera_matrix=camera_matrix,
+                                distortion_coefficients=distortion_coefficients
+                            )
+    
+    return plane_equation
+
 if __name__ == '__main__':
     
+
+    ################################################################
+    # Read image
+    ################################################################
+    # read image
+    img_bgr = cv.imread('/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-1.png')
+
+    # convert BGR to RGB
+    rgb_image = cv.cvtColor(img_bgr, cv.COLOR_BGR2RGB)
+
     ################################################################
     # calibration information related to camera
     ################################################################
@@ -85,40 +120,15 @@ if __name__ == '__main__':
     calibration_data = read_yaml_file(path=path)
     print(calibration_data)
 
-    ################################################################
-    # read image and find corners in calibration target
-    ################################################################
-    # read image from file
-    img = cv.imread('/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-1.png')
+    plane_equation = camera_coordinate_plane_equation_calibration_target(
+                            rgb_img=rgb_image,
+                            num_row=6,
+                            num_col=8,
+                            square=152,
+                            camera_matrix=calibration_data['camera_matrix'],
+                            distortion_coefficients=calibration_data['distortion_coefficients'],
+                            display=True
+                        )
 
-    # find corners on calibration target
-    points_3d_image_image_subpix = find_corners_on_calibration_target(img=img, num_row=6, num_col=8, square=152, display=True)
-    print('Corners in obeject and image coordinate system:')
-    print(points_3d_image_image_subpix)
-
-    ################################################################
-    # find rotation and translation from object to camera coordinate
-    # system
-    ################################################################
-    rotation_translation = rotation_and_translation_of_target_in_camera_image(
-                                object_points=points_3d_image_image_subpix['points_in_3D'],
-                                image_points=points_3d_image_image_subpix['points_in_image_sub_pixel'],
-                                camera_matrix=calibration_data['camera_matrix'],
-                                distortion_coefficients=calibration_data['distortion_coefficients']
-                            )
-
-    print('Rotation and Translation vetor from object points to camera coordinate system:')
-    print(rotation_translation)
-
-    ################################################################
-    # find plane equation of calibtarion target inside image
-    ################################################################
-    plane_equation = get_calibration_target_plane_equation_in_image(
-                                object_points=points_3d_image_image_subpix['points_in_3D'],
-                                image_points=points_3d_image_image_subpix['points_in_image_sub_pixel'],
-                                camera_matrix=calibration_data['camera_matrix'],
-                                distortion_coefficients=calibration_data['distortion_coefficients']
-                            )
-    
     print('Plane Equation:')
     print(plane_equation)
