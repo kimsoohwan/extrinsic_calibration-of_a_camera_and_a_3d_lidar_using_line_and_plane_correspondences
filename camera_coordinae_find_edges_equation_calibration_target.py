@@ -96,6 +96,7 @@ if __name__ == '__main__':
         #   calculate line equation in  
         #   camera coordinate
         ######################################
+        lines_equation_camera_coordinate = {}
         for line_name in lines_equations:
             line_equation_camera_coordinate = find_edge_equation_in_camera_coordinate(
                 line_equation_image=lines_equations[line_name],
@@ -103,5 +104,6 @@ if __name__ == '__main__':
                 camera_matrix=calibration_data['camera_matrix']
                 )
 
+            lines_equation_camera_coordinate[line_name] = np.copy(line_equation_camera_coordinate)
             print(">    Line equation,{}, in camera coordinate:".format(line_name))
             print(line_equation_camera_coordinate)
