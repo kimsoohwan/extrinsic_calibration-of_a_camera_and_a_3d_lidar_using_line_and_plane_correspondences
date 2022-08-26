@@ -1,6 +1,8 @@
+from tkinter import image_names
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
+from plt_figure_to_numpy import get_img_from_fig
 warnings.filterwarnings("ignore")
 
 def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, title=None, marker=None):
@@ -12,7 +14,7 @@ def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, 
     else:
         point_could_temp = np.vstack((point_cloud, point_cloud[0,:]))
     
-    plt.figure()
+    fig = plt.figure()
     plt.autoscale(False)
     ax = plt.axes(projection='3d')
 
@@ -54,7 +56,13 @@ def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, 
             plt.title("{}\nNormal: {}".format(title, normal_vector))
 
     plt.legend()
-    
+
+    numpy_img = get_img_from_fig(fig=fig)
+
+    # close opend figure
+    plt.close(fig)
+
+    return numpy_img
 
 def get_rotation_matrix(rotation_vector):
  
@@ -183,6 +191,8 @@ def generate_a_lidar_plane_in_3D(
     width is in Z direction and height is in Y direction
     """
 
+    plt_images = {}
+
     # corners of target before translating and rotating
     target_init_corners = np.array([[0, target_width/2.0, target_height/2.0], [0, -target_width/2.0, target_height/2.0], [0, -target_width/2.0, -target_height/2.0], [0, target_width/2.0, -target_height/2.0]])
     
@@ -191,8 +201,8 @@ def generate_a_lidar_plane_in_3D(
     
     # display plane (calibration target)
     if display:
-        show_point_cloud(point_cloud=target_init_corners, normal_vector=plane_normal, title='Target at origin')
-
+        plt_img = show_point_cloud(point_cloud=target_init_corners, normal_vector=plane_normal, title='Target at origin')
+        plt_images['calibration_target_orgin'] = np.copy(plt_img)
 
     # get rotation marix
     rotation_matrix = get_rotation_matrix(rotation_vector=rotation_vector)
@@ -205,13 +215,14 @@ def generate_a_lidar_plane_in_3D(
     plane_normal /= np.linalg.norm(plane_normal)
 
     if display:
-        show_point_cloud(point_cloud=target_rotated_corners, normal_vector=plane_normal, title='Target after rotaion: {}'.format(rotation_vector))
-
+        plt_img = show_point_cloud(point_cloud=target_rotated_corners, normal_vector=plane_normal, title='Target after rotaion: {}'.format(rotation_vector))
+        plt_images['calibration_target_rotated'] = np.copy(plt_img)
 
     # transform the target by tarnsform vector
     target_rotated_and_translated_corners = target_rotated_corners + translation_vector
     if display:
-        show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, title='Target after translation: {}'.format(translation_vector))
+        plt_img = show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, title='Target after translation: {}'.format(translation_vector))
+        plt_images['calibration_target_rotate_and_translated'] = np.copy(plt_img)
 
     d = -1 * (plane_normal[0] * target_rotated_and_translated_corners[0, 0] + plane_normal[1] * target_rotated_and_translated_corners[0, 1] + plane_normal[2] * target_rotated_and_translated_corners[0, 2])
     plane_eqiotion = np.array([plane_normal[0], plane_normal[1], plane_normal[2], d])
@@ -268,25 +279,32 @@ def generate_a_lidar_plane_in_3D(
         all_noisy_intersection = np.array(all_noisy_intersection)
         all_noisy_intersection = np.reshape(all_noisy_intersection, newshape=(-1, 3))
 
-        show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_intersection, title='Intersection of LiDAR and Target, No Noise')
-        show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_noisy_intersection, title='Intersection of LiDAR and Target, With Noise')
+        if display == True:
+            plt_img = show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_intersection, title='Intersection of LiDAR and Target, No Noise')
+            plt_images['intersection_rays_calibration_target_no_noise'] = np.copy(plt_img)
+            plt_img = show_point_cloud(point_cloud=target_rotated_and_translated_corners, normal_vector=plane_normal, intersection_points=all_noisy_intersection, title='Intersection of LiDAR and Target, With Noise')
+            plt_images['intersection_rays_calibration_target_noise'] = np.copy(plt_img)
 
-
-    if display:
-        plt.show()
+    
 
     return {'calibration_target_corners':target_rotated_and_translated_corners,
             'normal_plane': plane_normal,
             'plane_equation': plane_eqiotion,
             'lidar_point_without_noise':all_intersection, 
-            'lidar_point_with_noise':all_noisy_intersection}
+            'lidar_point_with_noise':all_noisy_intersection}, plt_images
 
 if __name__ == '__main__':
 
-    output_dic = generate_a_lidar_plane_in_3D(
+    output_dic, plt_images = generate_a_lidar_plane_in_3D(
                                     rotation_vector=np.array([45.0, 0.0, 0.0]), 
                                     translation_vector=np.array([5000.0, 0.0, 0.0]),
                                     display=True
                                 )
 
+    print('Generated calibration target and point cloud:')
     print(output_dic)
+
+    for key_i in plt_images:
+        plt.figure()
+        plt.imshow(plt_images[key_i])
+    plt.show()

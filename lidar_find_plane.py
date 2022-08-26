@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from lidar_generate_a_plane import generate_a_lidar_plane_in_3D
 
 def calculate_plane_equition(three_points):
@@ -70,10 +71,10 @@ def ransac_plane_in_lidar(lidar_point, maximum_iteration=50000, inlier_ratio=0.9
 if __name__ == '__main__':
 
     # generate an plane (point cloud)
-    output_dic = generate_a_lidar_plane_in_3D(
+    output_dic, images_generating_process = generate_a_lidar_plane_in_3D(
                                     rotation_vector=np.array([45.0, 45.0, 0.0]), 
                                     translation_vector=np.array([5000.0, 0.0, 0.0]),
-                                    display=False
+                                    display=True
                                 )
 
     # call function to calculate plane equation
@@ -82,3 +83,8 @@ if __name__ == '__main__':
     print(output_dic['plane_equation'])
     print('Calculated Plane Equation:')
     print(best_ratio_plane)
+
+    for key_i in images_generating_process:
+        plt.figure()
+        plt.imshow(images_generating_process[key_i])
+    plt.show()
