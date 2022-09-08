@@ -91,6 +91,9 @@ def camera_coordinate_plane_equation_calibration_target(rgb_img, num_row, num_co
                                         square=square,
                                         display=display)
 
+    if points_3d_image_image_subpix is None:
+        raise ValueError('Can not find corners on checkerboard.')
+
     # find plane equation of calibtarion target inside image
     plane_equation = get_calibration_target_plane_equation_in_image(
                                 object_points=points_3d_image_image_subpix['points_in_3D'],
