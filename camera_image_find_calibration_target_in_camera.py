@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 import glob
 import matplotlib.pyplot as plt
+from lidar_generate_a_plane import show_point_cloud
 
 def find_corners_on_calibration_target(img, num_row, num_col, square, display=False):
     """
@@ -32,19 +33,13 @@ def find_corners_on_calibration_target(img, num_row, num_col, square, display=Fa
         # corners in subpixel space
         corners2 = cv.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
         
-        if display == True:
-            # Draw and display the corners
-            img_copy = np.copy(img)
-            cv.drawChessboardCorners(img_copy, (num_col, num_row), corners2, ret)
-            plt.figure()
-            plt.imshow(img_copy, cmap = 'gray', interpolation = 'bicubic')
-            plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
-            plt.show()
-
+        img_copy = np.copy(img)
+        cv.drawChessboardCorners(img_copy, (num_col, num_row), corners2, ret)
+        
         corners = np.reshape(corners, newshape=(corners.shape[0], 2))
         corners2 = np.reshape(corners2, newshape=(corners2.shape[0], 2))
      
-        return {'points_in_3D': objp, 'points_in_image': corners, 'points_in_image_sub_pixel': corners2}
+        return {'points_in_3D': objp, 'points_in_image': corners, 'points_in_image_sub_pixel': corners2, 'image_corners': img_copy}
     else:
         return None
 
