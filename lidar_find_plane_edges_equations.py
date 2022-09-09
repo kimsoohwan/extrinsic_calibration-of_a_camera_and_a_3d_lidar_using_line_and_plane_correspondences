@@ -17,7 +17,7 @@ def plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud, maxim
                                 maximim_distance_two_consecutive_points_in_ray=maximim_distance_two_consecutive_points_in_ray)
 
     description = 'plane equation: ax+by+cz+d=0, each line equation: p0 a pont on line and t the direction vector'
-    return {'plane_equatoion': best_ratio_plane['plane_equation'], 'edges_equation':dic_line_equations, 'description':description}, images_edges_process
+    return {'plane_equation': best_ratio_plane['plane_equation'], 'edges_equation':dic_line_equations, 'description':description}, images_edges_process
 
 if __name__ == '__main__':
 
