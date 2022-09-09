@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from camera_image_find_line_equation import ransac_line_in_image
 from copy import copy
+from plt_figure_to_numpy import get_img_from_fig
 
 
 def segment_yellow_color(img):
@@ -103,6 +104,12 @@ def points_on_four_edges_calibration_target_camera_image(rgb_image, display=Fals
 
     points_on_edges = find_points_on_edges(img=bigest_component)
 
+    img_edges = np.copy(bigest_component)
+    img_edges = img_edges / 4
+    for key_i in points_on_edges:
+        for point in points_on_edges[key_i]:
+            img_edges[point[0], point[1]] = 1
+
     if display == True:
         plt.figure()
         plt.imshow(hsvImage, cmap = 'gray', interpolation = 'bicubic')
@@ -116,26 +123,24 @@ def points_on_four_edges_calibration_target_camera_image(rgb_image, display=Fals
         plt.imshow(bigest_component, cmap = 'gray', interpolation = 'bicubic')
         plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
 
-        bigest_component = bigest_component / 3
-        for key_i in points_on_edges:
-            for point in points_on_edges[key_i]:
-                bigest_component[point[0], point[1]] = 1
-
         plt.figure()
-        plt.imshow(bigest_component, cmap = 'gray', interpolation = 'bicubic')
+        plt.imshow(img_edges, cmap = 'gray', interpolation = 'bicubic')
         plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
 
         plt.show()
 
 
-    return points_on_edges
+    # images during process
+    images_process = [hsvImage, color_masked_img, bigest_component, img_edges]
+
+    return points_on_edges, images_process
 
 def line_equation_four_edges_calibration_target_in_camera_image(rgb_image, display=False):
     """
     the return lines equations are in opencv format
     """
     # extract points of four edges
-    edges_points = points_on_four_edges_calibration_target_camera_image(rgb_image=rgb_image, display=display)
+    edges_points, images_process = points_on_four_edges_calibration_target_camera_image(rgb_image=rgb_image, display=display)
 
     lines_equations = {} 
     for edge_name in edges_points:
@@ -165,7 +170,23 @@ def line_equation_four_edges_calibration_target_in_camera_image(rgb_image, displ
         else:
             raise ValueError('Name of edge is not correct')
 
-    return lines_equations
+    # generate images forline equations
+    fig = plt.figure()
+    plt.imshow(rgb_image)
+    for line_name in lines_equations:
+        point_cloud2 = []
+        for step in np.linspace(start=-400, stop=400, num=50):
+            point = lines_equations[line_name][0] + step * lines_equations[line_name][1]
+            point_cloud2.append(point)
+
+        point_cloud2 = np.array(point_cloud2)
+        plt.plot(point_cloud2[:, 0], point_cloud2[:, 1])
+        
+    numpy_img = get_img_from_fig(fig=fig)
+    plt.close(fig)
+    images_process.append(numpy_img)
+
+    return lines_equations, images_process
 
 def conver_2d_line_equation_to_homogenous_format(line_equation):
     """
@@ -197,7 +218,9 @@ if __name__ == '__main__':
         rgb_image = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
 
-        lines_equations = line_equation_four_edges_calibration_target_in_camera_image(rgb_image=rgb_image, display=True)
+        lines_equations, images_process = line_equation_four_edges_calibration_target_in_camera_image(
+                                            rgb_image=rgb_image,
+                                            display=True)
 
         print('all line equations for four edges of calibration target')
         for line_name in lines_equations:
@@ -207,16 +230,8 @@ if __name__ == '__main__':
             print('Line equation (homogenous format):\n {}'.format(
                                                             conver_2d_line_equation_to_homogenous_format(line_equation=lines_equations[line_name]))
                                                         )
-
-        plt.figure()
-        plt.imshow(rgb_image)
-        for line_name in lines_equations:
-            point_cloud2 = []
-            for step in np.linspace(start=-400, stop=400, num=50):
-                point = lines_equations[line_name][0] + step * lines_equations[line_name][1]
-                point_cloud2.append(point)
-
-            point_cloud2 = np.array(point_cloud2)
-            plt.plot(point_cloud2[:, 0], point_cloud2[:, 1])
         
+        for img in images_process:
+            plt.figure()
+            plt.imshow(img)
         plt.show()
