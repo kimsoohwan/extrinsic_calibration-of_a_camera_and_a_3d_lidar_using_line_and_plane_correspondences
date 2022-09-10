@@ -42,6 +42,9 @@ def ransac_plane_in_lidar(lidar_point, maximum_iteration=50000, inlier_ratio=0.9
     point_cloud_orginal = np.copy(lidar_point)
     
     best_ratio_plane = [0, None]
+    
+    # centroid of points in point cloud
+    plane_centroid = np.mean(point_cloud_orginal, axis=0)
 
     for _ in range(maximum_iteration):
         
@@ -68,7 +71,7 @@ def ransac_plane_in_lidar(lidar_point, maximum_iteration=50000, inlier_ratio=0.9
             if inlier_ratio <= inlier_to_all_points_all_set:
                 break
 
-    return {'inlier_to_all_data_ratio':best_ratio_plane[0], 'plane_equation':best_ratio_plane[1]}
+    return {'inlier_to_all_data_ratio':best_ratio_plane[0], 'plane_equation':best_ratio_plane[1], 'plane_centroid': plane_centroid}
 
 if __name__ == '__main__':
 

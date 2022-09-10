@@ -66,29 +66,6 @@ def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, 
 
     return numpy_img
 
-def get_rotation_matrix(rotation_vector):
- 
-    # degree to radian
-    theta_x, theta_y, theta_z =  -1 * rotation_vector * np.math.pi / 180.0
-
-    rx = np.array([[1, 0                   , 0],
-                   [0, np.math.cos(theta_x), -np.math.sin(theta_x)], 
-                   [0, np.math.sin(theta_x), np.math.cos(theta_x)]])
-
-    ry = np.array([[np.math.cos(theta_y) , 0, np.math.sin(theta_y)],
-                   [0                    , 1 , 0],
-                   [-np.math.sin(theta_y), 0, np.math.cos(theta_y)]])
-
-    rz = np.array([[np.math.cos(theta_z), -np.math.sin(theta_z), 0],
-                   [np.math.sin(theta_z),  np.math.cos(theta_z), 0],
-                   [0                   , 0                    , 1]])
-
-    # rotation matrix
-    rotation_matrix = np.dot(rz, np.dot(ry, rx))
-
-    return rotation_matrix
-
-
 
 # define a function which returns an image as numpy array from figure
 def get_img_from_fig(fig, dpi=180):
