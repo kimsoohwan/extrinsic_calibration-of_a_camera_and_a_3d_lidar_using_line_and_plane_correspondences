@@ -1,8 +1,12 @@
 from tkinter.messagebox import NO
-import numpy as np
-from read_calibration_file import read_yaml_file
-from camera_image_find_calibration_target_in_camera import find_corners_on_calibration_target
+
 import cv2 as cv
+import numpy as np
+
+from camera_image_find_calibration_target_in_camera import \
+    find_corners_on_calibration_target
+from read_calibration_file import read_yaml_file
+
 
 def calculate_plane_equition_by_three_points(three_points):
     """
