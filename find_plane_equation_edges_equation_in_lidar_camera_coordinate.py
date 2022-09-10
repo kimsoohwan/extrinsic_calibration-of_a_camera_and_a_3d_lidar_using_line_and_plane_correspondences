@@ -70,6 +70,7 @@ def calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(
             'lidar_plane_equation': plane_edges_equation['plane_equation'],
             'lidar_plane_centroid': plane_edges_equation['plane_centroid'],
             'lidar_edges_equation': plane_edges_equation['edges_equation'],
+            'lidar_edges_centroid': plane_edges_equation['edges_centroid'],
             'image_process': image_process_1,
             'description': 'plane equation: ax+by+cz+d=0, each line equation: p0 a point on line and t the direction vector'}
 

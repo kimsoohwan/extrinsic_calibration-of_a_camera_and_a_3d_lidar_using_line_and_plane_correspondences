@@ -12,14 +12,18 @@ def plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud, maxim
     best_ratio_plane = ransac_plane_in_lidar(lidar_point=lidar_point_cloud)
     
     # find plane's (calibration target) edges equation
-    dic_line_equations, images_edges_process = find_edges_of_calibration_target_in_lidar(
+    dic_line_equations, dic_edges_centroid, images_edges_process = find_edges_of_calibration_target_in_lidar(
                                 lidar_points=lidar_point_cloud,
                                 plane_equation=best_ratio_plane['plane_equation'],
                                 display=display,
                                 maximim_distance_two_consecutive_points_in_ray=maximim_distance_two_consecutive_points_in_ray)
 
     description = 'plane equation: ax+by+cz+d=0, each line equation: p0 a pont on line and t the direction vector'
-    return {'plane_equation': best_ratio_plane['plane_equation'], 'plane_centroid': best_ratio_plane['plane_centroid'], 'edges_equation':dic_line_equations, 'description':description}, images_edges_process
+    return {'plane_equation': best_ratio_plane['plane_equation'],
+            'plane_centroid': best_ratio_plane['plane_centroid'],
+            'edges_equation':dic_line_equations, 
+            'edges_centroid': dic_edges_centroid, 
+            'description':description}, images_edges_process
 
 if __name__ == '__main__':
 

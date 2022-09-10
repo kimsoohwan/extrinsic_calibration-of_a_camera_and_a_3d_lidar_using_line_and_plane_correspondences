@@ -236,6 +236,11 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     best_ratio_line_right_lower = ransac_line_in_lidar(lidar_point=edges_points['right_lower_points'])
     best_ratio_line_right_upper = ransac_line_in_lidar(lidar_point=edges_points['right_upper_points'])
 
+    edges_centroid = {'left_lower_points': np.mean(edges_points['left_lower_points'], axis=0),
+                      'left_upper_points': np.mean(edges_points['left_upper_points'], axis=0),
+                      'right_lower_points': np.mean(edges_points['right_lower_points'], axis=0), 
+                      'right_upper_points': np.mean(edges_points['right_upper_points'], axis=0)}
+
     left_lower_equation = best_ratio_line_left_lower['line_equation']
     left_upper_equation = best_ratio_line_left_upper['line_equation']
     right_lower_equation = best_ratio_line_right_lower['line_equation']
@@ -270,4 +275,4 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
 
 
     return {'line_equation_left_lower': left_lower_equation, 'line_equation_left_upper': left_upper_equation,
-            'line_equation_right_lower': right_lower_equation, 'line_equation_right_upper': right_upper_equation}, plt_images
+            'line_equation_right_lower': right_lower_equation, 'line_equation_right_upper': right_upper_equation}, edges_centroid, plt_images
