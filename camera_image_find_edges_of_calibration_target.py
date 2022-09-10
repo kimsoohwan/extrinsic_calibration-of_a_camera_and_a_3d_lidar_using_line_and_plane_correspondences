@@ -1,9 +1,11 @@
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-from camera_image_find_line_equation import ransac_line_in_image
 from copy import copy
-from plt_figure_to_numpy import get_img_from_fig
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+
+from camera_image_find_line_equation import ransac_line_in_image
+from utils_display import get_img_from_fig
 
 
 def segment_yellow_color(img):

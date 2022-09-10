@@ -1,8 +1,10 @@
-import numpy as np
-from lidar_find_target_edges_in_point_cloud import find_edges_of_calibration_target_in_lidar
-from lidar_find_plane import ransac_plane_in_lidar
-from lidar_generate_a_plane import generate_a_lidar_plane_in_3D
 import matplotlib.pyplot as plt
+import numpy as np
+
+from lidar_find_plane import ransac_plane_in_lidar
+from lidar_find_target_edges_in_point_cloud import \
+    find_edges_of_calibration_target_in_lidar
+from lidar_generate_a_plane import generate_a_lidar_plane_in_3D
 
 
 def plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud, maximim_distance_two_consecutive_points_in_ray=100, display=False):

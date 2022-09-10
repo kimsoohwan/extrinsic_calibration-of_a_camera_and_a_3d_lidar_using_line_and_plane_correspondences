@@ -1,6 +1,8 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from lidar_generate_a_plane import generate_a_lidar_plane_in_3D
+
 
 def calculate_plane_equition(three_points):
     # calculate plane equition ax+by+cz+d = 0

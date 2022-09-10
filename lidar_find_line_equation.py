@@ -1,6 +1,7 @@
-import numpy as np
-from lidar_generate_a_plane import show_point_cloud
 import matplotlib.pyplot as plt
+import numpy as np
+
+from utils_display import show_point_cloud
 
 
 def calculate_line_equition(two_points):

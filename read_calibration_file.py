@@ -1,6 +1,8 @@
 from unittest.mock import patch
-import yaml
+
 import numpy as np
+import yaml
+
 
 def read_yaml_file(path):
     with open(path, "r") as stream:

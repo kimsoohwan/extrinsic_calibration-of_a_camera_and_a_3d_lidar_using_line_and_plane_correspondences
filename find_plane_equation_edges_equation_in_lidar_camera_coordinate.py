@@ -1,12 +1,18 @@
-import cv2 as cv
-import numpy as np
-from read_calibration_file import read_yaml_file
-from camera_coordinate_find_plane_equation_calibration_target import camera_coordinate_plane_equation_calibration_target
-from camera_image_find_edges_of_calibration_target import line_equation_four_edges_calibration_target_in_camera_image
-from camera_coordinae_find_edges_equation_calibration_target import find_edge_equation_in_camera_coordinate
-from lidar_find_plane_edges_equations import plane_equation_and_edges_equation_lidar_point_cloud
-import matplotlib.pyplot as plt
 import traceback
+
+import cv2 as cv
+import matplotlib.pyplot as plt
+import numpy as np
+
+from camera_coordinae_find_edges_equation_calibration_target import \
+    find_edge_equation_in_camera_coordinate
+from camera_coordinate_find_plane_equation_calibration_target import \
+    camera_coordinate_plane_equation_calibration_target
+from camera_image_find_edges_of_calibration_target import \
+    line_equation_four_edges_calibration_target_in_camera_image
+from lidar_find_plane_edges_equations import \
+    plane_equation_and_edges_equation_lidar_point_cloud
+from read_calibration_file import read_yaml_file
 
 
 def calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(

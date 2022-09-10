@@ -1,8 +1,10 @@
-import numpy as np
-from lidar_generate_a_plane import show_point_cloud
-import matplotlib.pyplot as plt
-from lidar_find_line_equation import ransac_line_in_lidar, map_point_to_line
 from copy import copy
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from lidar_find_line_equation import map_point_to_line, ransac_line_in_lidar
+from utils_display import show_point_cloud
 
 
 def distance_of_points_to_plane(point_cloud, plane_equation):
