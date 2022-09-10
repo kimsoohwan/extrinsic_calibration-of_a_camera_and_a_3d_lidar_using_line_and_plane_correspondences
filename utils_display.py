@@ -5,8 +5,6 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils_display import get_img_from_fig
-
 warnings.filterwarnings("ignore")
 
 def show_point_cloud(point_cloud, normal_vector=None, intersection_points=None, title=None, marker=None):
