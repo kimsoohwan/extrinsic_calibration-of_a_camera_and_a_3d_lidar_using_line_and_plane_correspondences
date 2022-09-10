@@ -240,26 +240,31 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     right_upper_equation = best_ratio_line_right_upper['line_equation']
 
     plt_images = {}
-    if display == True:
-        plt_img = show_point_cloud(point_cloud=point_cloud, title='Input Point Cloud')
-        plt_images['input_point_cloud'] = np.copy(plt_img)
-        plt_img = show_point_cloud(point_cloud=projected_point_cloud, title='Point Cloud Projected on Plane Equation')
-        plt_images['point_cloud_projected_on_plane_equation'] = np.copy(plt_img)
-        plt_img = show_point_cloud(point_cloud=lines, title='LiDAR Ray in Point Cloud')
-        plt_images['LiDAR Ray in Point Cloud'] = np.copy(plt_img)
-        plt_img = show_point_cloud(point_cloud=point_cloud_mapped_on_lines, title='Point Cloud mapped on Line Equations')
-        plt_images['point_cloud_mapped_on_line_equations'] = np.copy(plt_img)
-        plt_img = show_point_cloud(point_cloud=[point_cloud_mapped_on_lines, dic_point_border['border_point_cloud']], marker='o', title='Points on Calibration Target Edges')
-        plt_images['points_on_calibration_target_edges'] = np.copy(plt_img)
-        plt_img = show_point_cloud(point_cloud=[edges_points['left_lower_points'], edges_points['left_upper_points'], edges_points['right_lower_points'], edges_points['right_upper_points']], marker='o', title='Left Lower, Left Upeer, Right Lower and Right Upper Points on Edges')
-        plt_images['points_on_edges'] = np.copy(plt_img)
+    plt_img = show_point_cloud(point_cloud=point_cloud, title='Input Point Cloud')
+    plt_images['input_point_cloud'] = np.copy(plt_img)
+    plt_img = show_point_cloud(point_cloud=projected_point_cloud, title='Point Cloud Projected on Plane Equation')
+    plt_images['point_cloud_projected_on_plane_equation'] = np.copy(plt_img)
+    plt_img = show_point_cloud(point_cloud=lines, title='LiDAR Ray in Point Cloud')
+    plt_images['LiDAR Ray in Point Cloud'] = np.copy(plt_img)
+    plt_img = show_point_cloud(point_cloud=point_cloud_mapped_on_lines, title='Point Cloud mapped on Line Equations')
+    plt_images['point_cloud_mapped_on_line_equations'] = np.copy(plt_img)
+    plt_img = show_point_cloud(point_cloud=[point_cloud_mapped_on_lines, dic_point_border['border_point_cloud']], marker='o', title='Points on Calibration Target Edges')
+    plt_images['points_on_calibration_target_edges'] = np.copy(plt_img)
+    plt_img = show_point_cloud(point_cloud=[edges_points['left_lower_points'], edges_points['left_upper_points'], edges_points['right_lower_points'], edges_points['right_upper_points']], marker='o', title='Left Lower, Left Upeer, Right Lower and Right Upper Points on Edges')
+    plt_images['points_on_edges'] = np.copy(plt_img)
 
-        left_lower_pointcloud = generate_point_line(line_equation=left_lower_equation)
-        left_upper_pointcloud = generate_point_line(line_equation=left_upper_equation)
-        right_lower_pointcloud = generate_point_line(line_equation=right_lower_equation)
-        right_upper_pointcloud = generate_point_line(line_equation=right_upper_equation)
-        plt_img = show_point_cloud(point_cloud=[point_cloud, left_lower_pointcloud, left_upper_pointcloud, right_lower_pointcloud, right_upper_pointcloud], title='Equation of Edges')
-        plt_images['edges_line_equtions_and_all_points'] = np.copy(plt_img)
+    left_lower_pointcloud = generate_point_line(line_equation=left_lower_equation)
+    left_upper_pointcloud = generate_point_line(line_equation=left_upper_equation)
+    right_lower_pointcloud = generate_point_line(line_equation=right_lower_equation)
+    right_upper_pointcloud = generate_point_line(line_equation=right_upper_equation)
+    plt_img = show_point_cloud(point_cloud=[point_cloud, left_lower_pointcloud, left_upper_pointcloud, right_lower_pointcloud, right_upper_pointcloud], title='Equation of Edges')
+    plt_images['edges_line_equtions_and_all_points'] = np.copy(plt_img)
+    
+    if display == True:
+        for key_img in plt_images:
+            plt.figure()
+            plt.imshow(plt_images[key_img])
+        plt.show()
 
 
     return {'line_equation_left_lower': left_lower_equation, 'line_equation_left_upper': left_upper_equation,
