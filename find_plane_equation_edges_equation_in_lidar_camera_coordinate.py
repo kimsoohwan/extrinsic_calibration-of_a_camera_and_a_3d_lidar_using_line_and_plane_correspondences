@@ -4,10 +4,20 @@ from read_calibration_file import read_yaml_file
 from camera_coordinate_find_plane_equation_calibration_target import camera_coordinate_plane_equation_calibration_target
 from camera_image_find_edges_of_calibration_target import line_equation_four_edges_calibration_target_in_camera_image
 from camera_coordinae_find_edges_equation_calibration_target import find_edge_equation_in_camera_coordinate
+from lidar_find_plane_edges_equations import plane_equation_and_edges_equation_lidar_point_cloud
+import matplotlib.pyplot as plt
 import traceback
 
 
-def calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(calibration_data, rgb_image, num_row, num_col, square, display=False):
+def calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(
+    point_cloud,
+    maximim_distance_two_consecutive_points_in_ray,
+    calibration_data,
+    rgb_image,
+    num_row,
+    num_col,
+    square,
+    display=False):
     
     # plane equation of calibration target in camera coordinate system
     try:
@@ -20,22 +30,13 @@ def calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(calibrati
                                 distortion_coefficients=calibration_data['distortion_coefficients'],
                                 display=display
                             )
-        print('Plane Equation in Camera Coordinate:')
-        print(image_coordinate_plane_equation)
     except Exception:
         traceback.print_exc()
 
     
     #  Finds edges equations in camera image 
     lines_equations, image_process_1 = line_equation_four_edges_calibration_target_in_camera_image(
-                                            rgb_image=rgb_image, display=False)
-
-    print('All line equations for four edges of calibration target in image')
-    for line_name in lines_equations:
-            
-        print('Line name: {}'.format(line_name))
-        print('Line equation (point, direction): {}'.format(lines_equations[line_name]))
-    print('=' * 100)
+                                            rgb_image=rgb_image, display=display)
 
     # calculate line equation in  camera coordinate
     lines_equation_camera_coordinate = {}
@@ -45,11 +46,25 @@ def calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(calibrati
                 plane_camera_coordinate=image_coordinate_plane_equation,
                 camera_matrix=calibration_data['camera_matrix']
                 )
-
         lines_equation_camera_coordinate[line_name] = np.copy(line_equation_camera_coordinate)
-        print(">    Line equation,{}, in camera coordinate:".format(line_name))
-        print(line_equation_camera_coordinate)
 
+
+    # find plane and edges equation in LiDAR
+    plane_edges_equation, image_process_2 = plane_equation_and_edges_equation_lidar_point_cloud(
+        lidar_point_cloud=point_cloud,
+        maximim_distance_two_consecutive_points_in_ray=maximim_distance_two_consecutive_points_in_ray,
+        display=display
+    )
+
+    for key in image_process_2:
+        image_process_1.append(image_process_2[key])
+
+    return {'camera_coordinate_plane_equation': image_coordinate_plane_equation,
+            'camera_coordinate_edges_equation': lines_equation_camera_coordinate,
+            'lidar_plane_equation': plane_edges_equation['plane_equation'],
+            'lidar_edges_equation': plane_edges_equation['edges_equation'],
+            'image_process': image_process_1,
+            'description': 'plane equation: ax+by+cz+d=0, each line equation: p0 a point on line and t the direction vector'}
 
 if __name__ == '__main__':
     
@@ -63,6 +78,13 @@ if __name__ == '__main__':
     rgb_image = cv.cvtColor(img_bgr, cv.COLOR_BGR2RGB)
 
     ################################################################
+    # Read Point Cloud
+    ################################################################
+    point_cloud = np.load('example_real_img_lidar_points/selected_points_in_lidar-1.npy')
+    # convert to mm
+    point_cloud *= 1000
+
+    ################################################################
     # calibration information related to camera
     ################################################################
     path = '/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/left_camera_calibration_parameters.yaml'
@@ -73,11 +95,23 @@ if __name__ == '__main__':
     # Calculate plane equation and edges equations for calibration
     # target inside lidar and camera coordinate system
     ################################################################
-    calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(
-            calibration_data,
-            rgb_image=rgb_image,
-            num_row=6,
-            num_col=8,
-            square=152,
-            display=True
-        )
+    plane_edges_equations_in_lidar_camera_coordinate = calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(
+                                                            point_cloud=point_cloud,
+                                                            maximim_distance_two_consecutive_points_in_ray=100,
+                                                            calibration_data=calibration_data,
+                                                            rgb_image=rgb_image,
+                                                            num_row=6,
+                                                            num_col=8,
+                                                            square=152,
+                                                            display=False
+                                                        )
+
+    for key in plane_edges_equations_in_lidar_camera_coordinate:
+        if key != 'image_process':
+            print('>    {}'.format(key))
+            print(plane_edges_equations_in_lidar_camera_coordinate[key])
+
+    for img in plane_edges_equations_in_lidar_camera_coordinate['image_process']:
+        plt.figure()
+        plt.imshow(img)
+    plt.show()
