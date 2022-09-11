@@ -122,8 +122,8 @@ def find_points_on_left_right_border(lines):
         # sory by y
         line = sorted(line, key = lambda x: x[1])
 
-        points_on_left_border.append(line[0])
-        points_on_right_border.append(line[-1])
+        points_on_left_border.append(line[-1])
+        points_on_right_border.append(line[0])
 
     all_points = points_on_left_border + points_on_right_border
     all_points = np.array(all_points)
