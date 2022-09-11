@@ -246,6 +246,16 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     right_lower_equation = best_ratio_line_right_lower['line_equation']
     right_upper_equation = best_ratio_line_right_upper['line_equation']
 
+    # unify edge directions of calibration target inside lidar coordinate system
+    if left_lower_equation[1][1] < 0:
+        left_lower_equation[1] *= -1
+    if left_upper_equation[1][1] > 0:
+        left_upper_equation[1] *= -1
+    if right_upper_equation[1][1] > 0:
+        right_upper_equation[1] *= -1
+    if right_lower_equation[1][1] < 0:
+        right_lower_equation[1] *= -1
+
     plt_images = {}
     plt_img = show_point_cloud(point_cloud=point_cloud, title='Input Point Cloud')
     plt_images['input_point_cloud'] = np.copy(plt_img)
@@ -273,6 +283,7 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
             plt.imshow(plt_images[key_img])
         plt.show()
 
+    all_edges_equations = {'line_equation_left_lower': left_lower_equation, 'line_equation_left_upper': left_upper_equation,
+            'line_equation_right_lower': right_lower_equation, 'line_equation_right_upper': right_upper_equation}
 
-    return {'line_equation_left_lower': left_lower_equation, 'line_equation_left_upper': left_upper_equation,
-            'line_equation_right_lower': right_lower_equation, 'line_equation_right_upper': right_upper_equation}, edges_centroid, plt_images
+    return all_edges_equations, edges_centroid, plt_images

@@ -3,6 +3,7 @@ import traceback
 import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
+from copy import copy
 
 from camera_coordinae_find_edges_equation_calibration_target import \
     find_edge_equation_in_camera_coordinate
@@ -52,8 +53,19 @@ def calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(
                 plane_camera_coordinate=image_coordinate_plane_equation,
                 camera_matrix=calibration_data['camera_matrix']
                 )
-        lines_equation_camera_coordinate[line_name] = np.copy(line_equation_camera_coordinate)
+        lines_equation_camera_coordinate[line_name] = copy(line_equation_camera_coordinate)
 
+    # unify edge directions of calibration target inside camera coordinate system
+    if lines_equation_camera_coordinate['left_lower_edge_equation'][1][0] > 0:
+        lines_equation_camera_coordinate['left_lower_edge_equation'][1] *= -1
+    if lines_equation_camera_coordinate['left_upper_edge_equation'][1][0] < 0:
+        lines_equation_camera_coordinate['left_upper_edge_equation'][1] *= -1
+    if lines_equation_camera_coordinate['right_upper_edge_equation'][1][0] < 0:
+        lines_equation_camera_coordinate['right_upper_edge_equation'][1] *= -1
+    if lines_equation_camera_coordinate['right_lower_edge_equation'][1][0] > 0:
+        lines_equation_camera_coordinate['right_lower_edge_equation'][1] *= -1
+    
+        
 
     # find plane and edges equation in LiDAR
     plane_edges_equation, image_process_2 = plane_equation_and_edges_equation_lidar_point_cloud(
