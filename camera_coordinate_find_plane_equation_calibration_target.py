@@ -39,7 +39,9 @@ def rotation_and_translation_of_target_in_camera_image(object_points, image_poin
     rvec is in radian
     tvec is in mm
     """
-    retval, rvec, tvec = cv.solvePnP(objectPoints=object_points, imagePoints=image_points, cameraMatrix=camera_matrix, distCoeffs=distortion_coefficients)
+    # retval, rvec, tvec = cv.solvePnP(objectPoints=object_points, imagePoints=image_points, cameraMatrix=camera_matrix, distCoeffs=distortion_coefficients)
+    retval, rvec, tvec = cv.solvePnP(objectPoints=object_points, imagePoints=image_points, cameraMatrix=camera_matrix, distCoeffs=None)
+
 
     if retval == True:
         return {'rotation_vector': rvec, 'translation_vector': tvec}

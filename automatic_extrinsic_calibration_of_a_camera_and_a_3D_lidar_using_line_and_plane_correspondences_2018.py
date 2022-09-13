@@ -226,6 +226,7 @@ if __name__ == '__main__':
     # convert BGR to RGB
     rgb_image = cv.cvtColor(img_bgr, cv.COLOR_BGR2RGB)
 
+
     ################################################################
     # Read Point Cloud
     ################################################################
@@ -247,6 +248,16 @@ if __name__ == '__main__':
     calibration_data = read_yaml_file(path=path)
     print("Calibration Parameters:\n", calibration_data)
 
+
+    ################################################################
+    # remove distortion from camera with intrensic parameters of camera
+    ################################################################    
+    rgb_image = cv.undistort(
+        src=rgb_image, 
+        cameraMatrix=calibration_data['camera_matrix'],
+        distCoeffs=calibration_data['distortion_coefficients']
+        )
+    
     ################################################################
     # Calculate plane equation and edges equations for calibration
     # target inside lidar and camera coordinate system
