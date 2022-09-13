@@ -6,6 +6,7 @@ import math
 from find_plane_equation_edges_equation_in_lidar_camera_coordinate import \
     calculate_plane_equation_edges_equation_in_lidar_camera_coordinate
 from read_calibration_file import read_yaml_file
+from utils_display import get_img_from_fig
 
 def is_rotation_matrix(R) :
     """
@@ -68,8 +69,75 @@ def init_estimate_R_one_pose(lidar_plane_equation, lidar_edges_equation, camera_
 
     return {'rotation_matrix': r_estimate_matrix, 'rotation_vector_radian':r_estimate_vector_radian, 'rotation_vector_degree':r_estimate_vector_degree}
 
+def calculate_A(line_direction):
+    # direction of line
+    line_direction = np.copy(line_direction)
+    line_direction = np.reshape(line_direction, newshape=(-1, 1))
+    if line_direction.shape[0] != 3:
+        raise ValueError('The shape of direction vector for line equation is not correct.')
 
+    matrix_a = np.identity(n=3) - np.dot(line_direction, line_direction.T)
+
+    return matrix_a
+
+def init_estimate_t_one_pose(camera_coordinate_plane_equation, camera_coordinate_edges_equation,
+                             estimated_rotation_matrix, lidar_plane_centroid, lidar_edges_centroid):
     
+    # normal vector and d of plane in camera coordinate (ax+by+cz+d=0)
+    n_c = camera_coordinate_plane_equation.tolist()[0:3]
+    d_c = camera_coordinate_plane_equation.tolist()[3]
+    
+    # points on calibration target edges
+    p1_c =  camera_coordinate_edges_equation['left_lower_edge_equation'][0].tolist()
+    p2_c =  camera_coordinate_edges_equation['left_upper_edge_equation'][0].tolist()
+    p3_c =  camera_coordinate_edges_equation['right_upper_edge_equation'][0].tolist()
+    p4_c =  camera_coordinate_edges_equation['right_lower_edge_equation'][0].tolist()
+
+    # direction of calibration target edges
+    l1_c =  camera_coordinate_edges_equation['left_lower_edge_equation'][1].tolist()
+    l2_c =  camera_coordinate_edges_equation['left_upper_edge_equation'][1].tolist()
+    l3_c =  camera_coordinate_edges_equation['right_upper_edge_equation'][1].tolist()
+    l4_c =  camera_coordinate_edges_equation['right_lower_edge_equation'][1].tolist()
+
+    centroid_l1_c = lidar_edges_centroid['left_lower_points'].tolist()
+    centroid_l2_c = lidar_edges_centroid['left_upper_points'].tolist()
+    centroid_l3_c = lidar_edges_centroid['right_upper_points'].tolist()
+    centroid_l4_c = lidar_edges_centroid['right_lower_points'].tolist()
+
+    # A = I-d.d
+    matrix_A_1 = calculate_A(line_direction=l1_c)
+    matrix_A_2 = calculate_A(line_direction=l2_c)
+    matrix_A_3 = calculate_A(line_direction=l3_c)
+    matrix_A_4 = calculate_A(line_direction=l4_c)
+
+    # convert matrixes to proper size
+    n_c = np.reshape(n_c, newshape=(-1, 1))
+    d_c = np.reshape(d_c, newshape=(-1, 1))
+    p1_c = np.reshape(p1_c, newshape=(-1, 1))
+    p2_c = np.reshape(p2_c, newshape=(-1, 1))
+    p3_c = np.reshape(p3_c, newshape=(-1, 1))
+    p4_c = np.reshape(p4_c, newshape=(-1, 1))
+    lidar_plane_centroid = np.reshape(lidar_plane_centroid, newshape=(-1, 1))
+    centroid_l1_c = np.reshape(centroid_l1_c, newshape=(-1, 1))
+    centroid_l2_c = np.reshape(centroid_l2_c, newshape=(-1, 1))
+    centroid_l3_c = np.reshape(centroid_l3_c, newshape=(-1, 1))
+    centroid_l4_c = np.reshape(centroid_l4_c, newshape=(-1, 1))
+
+    # create linear system, euqation Matrix_left * t= Vector_right 
+    matrix_left = np.vstack((n_c.T, matrix_A_1, matrix_A_2, matrix_A_3, matrix_A_4))
+
+    matrix_right = np.zeros(shape=(matrix_left.shape[0], 1))
+    matrix_right[0, 0] = -np.dot(n_c.T, np.dot(estimated_rotation_matrix, lidar_plane_centroid)) - d_c
+    matrix_right[1:4] = -np.dot(matrix_A_1, np.dot(estimated_rotation_matrix, centroid_l1_c) - p1_c)
+    matrix_right[4:7] = -np.dot(matrix_A_2, np.dot(estimated_rotation_matrix, centroid_l2_c) - p2_c)
+    matrix_right[7:10] = -np.dot(matrix_A_3, np.dot(estimated_rotation_matrix, centroid_l3_c) - p3_c)
+    matrix_right[10:13] = -np.dot(matrix_A_4, np.dot(estimated_rotation_matrix, centroid_l4_c) - p4_c) 
+
+    # solve least squre problem
+    estimated_t = np.dot(np.dot(np.linalg.inv(np.dot(matrix_left.T, matrix_left)), matrix_left.T), matrix_right)
+
+    return estimated_t
+
 def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_plane_correspondences(
     calibration_data,
     camera_coordinate_plane_equation,
@@ -89,6 +157,47 @@ def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_pl
                                         )
     estimated_rotation_matrix = estimated_rotation_results['rotation_matrix']
 
+    # initial estimate for t
+    estimated_translation= init_estimate_t_one_pose(
+        camera_coordinate_plane_equation=camera_coordinate_plane_equation,
+        camera_coordinate_edges_equation=camera_coordinate_edges_equation,
+        estimated_rotation_matrix=estimated_rotation_matrix, 
+        lidar_plane_centroid=lidar_plane_centroid, 
+        lidar_edges_centroid=lidar_edges_centroid
+        )
+
+    print('Estimated Rotation Matrix:')
+    print(estimated_rotation_matrix)
+    print('Estimated Translation Matrix:')
+    print(estimated_translation)
+
+    return estimated_rotation_matrix, estimated_translation
+
+def lidar_points_in_image(
+    rgb_image, point_cloud,
+    calibration_data,
+    r_lidar_to_camera_coordinate,
+    t_lidar_to_camera_coordinate, 
+):
+
+    # translate lidar points to camera coordinate system
+    points_in_camera_coordinate = np.dot(r_lidar_to_camera_coordinate, point_cloud.T) + t_lidar_to_camera_coordinate
+
+    # project points form camera coordinate to image
+    points_in_image = np.dot(calibration_data['camera_matrix'], points_in_camera_coordinate)
+    points_in_image = points_in_image / points_in_image[2, :]
+    points_in_image = points_in_image[0:2, :]
+    points_in_image = points_in_image.T
+
+    fig = plt.figure()
+    plt.imshow(rgb_image)
+    plt.scatter(points_in_image[:, 0].tolist(), points_in_image[:, 1].tolist(), s=3)
+    ax = plt.gca()
+    ax.axes.xaxis.set_ticks([])
+    ax.axes.yaxis.set_ticks([])
+    img_lidar_points = get_img_from_fig(fig=fig, dpi=500)
+
+    return points_in_image, img_lidar_points
     
 
 if __name__ == '__main__':
@@ -144,7 +253,7 @@ if __name__ == '__main__':
     ###################################################################
     #       Calculate R and t
     ###################################################################
-    automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_plane_correspondences(
+    r_lidar_to_camera_coordinate, t_lidar_to_camera_coordinate = automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_plane_correspondences(
         calibration_data=calibration_data,
         camera_coordinate_plane_equation=plane_edges_equations_in_lidar_camera_coordinate['camera_coordinate_plane_equation'],
         camera_coordinate_edges_equation=plane_edges_equations_in_lidar_camera_coordinate['camera_coordinate_edges_equation'],
@@ -153,3 +262,17 @@ if __name__ == '__main__':
         lidar_edges_equation=plane_edges_equations_in_lidar_camera_coordinate['lidar_edges_equation'],
         lidar_edges_centroid=plane_edges_equations_in_lidar_camera_coordinate['lidar_edges_centroid']
     )
+
+    # point clould points on image
+    points_in_image, img_lidar_points = lidar_points_in_image(
+        rgb_image=rgb_image,
+        point_cloud=point_cloud,
+        calibration_data=calibration_data,
+        r_lidar_to_camera_coordinate=r_lidar_to_camera_coordinate,
+        t_lidar_to_camera_coordinate=t_lidar_to_camera_coordinate
+    )
+    
+    plt.figure()
+    plt.imshow(img_lidar_points)
+    plt.show()
+
