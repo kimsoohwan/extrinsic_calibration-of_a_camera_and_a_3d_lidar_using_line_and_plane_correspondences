@@ -174,12 +174,20 @@ def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_pl
     return estimated_rotation_matrix, estimated_translation
 
 def lidar_points_in_image(
-    rgb_image, point_cloud,
+    rgb_image, 
+    point_cloud,
     calibration_data,
     r_lidar_to_camera_coordinate,
     t_lidar_to_camera_coordinate, 
 ):
 
+    # keep points that are in front of LiDAR
+    points_in_front_of_lidar = []
+    for point_i in point_cloud:
+        if point_i[0] >= 0:
+            points_in_front_of_lidar.append(point_i)
+    point_cloud = np.array(points_in_front_of_lidar)
+    
     # translate lidar points to camera coordinate system
     points_in_camera_coordinate = np.dot(r_lidar_to_camera_coordinate, point_cloud.T) + t_lidar_to_camera_coordinate
 
@@ -188,6 +196,13 @@ def lidar_points_in_image(
     points_in_image = points_in_image / points_in_image[2, :]
     points_in_image = points_in_image[0:2, :]
     points_in_image = points_in_image.T
+
+    # keep points that are inside image
+    points_inside_image = []
+    for point_i in points_in_image:
+        if (0 <= point_i[0] < rgb_image.shape[1]) and (0 <= point_i[1] < rgb_image.shape[0]):
+            points_inside_image.append(point_i)
+    points_in_image = np.array(points_inside_image)
 
     fig = plt.figure()
     plt.imshow(rgb_image)
@@ -214,9 +229,16 @@ if __name__ == '__main__':
     ################################################################
     # Read Point Cloud
     ################################################################
-    point_cloud = np.load('example_real_img_lidar_points/selected_points_in_lidar-1.npy')
+    
+    # point cloud of calibration target
+    point_cloud_target = np.load('example_real_img_lidar_points/selected_points_in_lidar-1.npy')
     # convert to mm
-    point_cloud *= 1000
+    point_cloud_target *= 1000
+
+    # point cloud of whole scence
+    point_cloud_scene = np.load('example_real_img_lidar_points/selected_points_in_lidar-1_whole_scene.npy')
+    # convert to mm
+    point_cloud_scene *= 1000
 
     ################################################################
     # calibration information related to camera
@@ -230,7 +252,7 @@ if __name__ == '__main__':
     # target inside lidar and camera coordinate system
     ################################################################
     plane_edges_equations_in_lidar_camera_coordinate = calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(
-                                                            point_cloud=point_cloud,
+                                                            point_cloud=point_cloud_target,
                                                             maximim_distance_two_consecutive_points_in_ray=100,
                                                             calibration_data=calibration_data,
                                                             rgb_image=rgb_image,
@@ -263,15 +285,24 @@ if __name__ == '__main__':
         lidar_edges_centroid=plane_edges_equations_in_lidar_camera_coordinate['lidar_edges_centroid']
     )
 
-    # point clould points on image
+    # point clould points of calibrariotion target on image
     points_in_image, img_lidar_points = lidar_points_in_image(
         rgb_image=rgb_image,
-        point_cloud=point_cloud,
+        point_cloud=point_cloud_target,
         calibration_data=calibration_data,
         r_lidar_to_camera_coordinate=r_lidar_to_camera_coordinate,
         t_lidar_to_camera_coordinate=t_lidar_to_camera_coordinate
     )
     
+    # point clould points of whole scene on image
+    points_in_image, img_lidar_points = lidar_points_in_image(
+        rgb_image=rgb_image,
+        point_cloud=point_cloud_scene,
+        calibration_data=calibration_data,
+        r_lidar_to_camera_coordinate=r_lidar_to_camera_coordinate,
+        t_lidar_to_camera_coordinate=t_lidar_to_camera_coordinate
+    )
+
     plt.figure()
     plt.imshow(img_lidar_points)
     plt.show()
