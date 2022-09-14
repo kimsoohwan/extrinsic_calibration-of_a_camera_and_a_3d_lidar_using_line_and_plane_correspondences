@@ -8,7 +8,10 @@ from utils_display import show_point_cloud
 warnings.filterwarnings("ignore")
 
 def get_rotation_matrix(rotation_vector):
- 
+    """
+    Generate a rotaion matrix by geting a rotaion vector and contain rotaion around 
+    x, y, z axis. The input values are in degree.
+    """
     # degree to radian
     theta_x, theta_y, theta_z =  -1 * rotation_vector * np.math.pi / 180.0
 

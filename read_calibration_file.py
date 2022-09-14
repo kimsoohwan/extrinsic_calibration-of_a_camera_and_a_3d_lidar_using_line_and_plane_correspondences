@@ -5,6 +5,11 @@ import yaml
 
 
 def read_yaml_file(path):
+    """
+    path: a path to a yaml file that contain intrinsic calibration parameter of a camera. 
+    It should be obtained with this ROS package: camera_calibration 
+    http://wiki.ros.org/camera_calibration
+    """
     with open(path, "r") as stream:
         try:
             yaml_data = yaml.safe_load(stream)
