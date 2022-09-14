@@ -227,6 +227,7 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
 
     # centroid of denoised points on calibration target in LiDAR space
     denoised_plane_centroid = np.mean(point_cloud_mapped_on_lines, axis=0)
+    denoised_plane_points = np.copy(point_cloud_mapped_on_lines)
 
     dic_point_border = find_points_on_left_right_border(list_point_mapped_on_lines)
 
@@ -289,4 +290,4 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     all_edges_equations = {'line_equation_left_lower': left_lower_equation, 'line_equation_left_upper': left_upper_equation,
             'line_equation_right_lower': right_lower_equation, 'line_equation_right_upper': right_upper_equation}
 
-    return all_edges_equations, denoised_plane_centroid, denoised_edges_centroid, plt_images, denoised_edges_points
+    return all_edges_equations, denoised_plane_centroid, denoised_edges_centroid, plt_images, denoised_plane_points, denoised_edges_points
