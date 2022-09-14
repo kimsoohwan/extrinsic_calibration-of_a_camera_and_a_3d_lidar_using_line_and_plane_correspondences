@@ -231,18 +231,18 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     dic_point_border = find_points_on_left_right_border(list_point_mapped_on_lines)
 
     # find point on upper and lower edges
-    edges_points = find_upper_and_lower_points_on_edges(points_on_left_border=dic_point_border['left_points'], points_on_right_border=dic_point_border['right_points'])
+    denoised_edges_points = find_upper_and_lower_points_on_edges(points_on_left_border=dic_point_border['left_points'], points_on_right_border=dic_point_border['right_points'])
 
     # find equation of edges
-    best_ratio_line_left_lower = ransac_line_in_lidar(lidar_point=edges_points['left_lower_points'])
-    best_ratio_line_left_upper = ransac_line_in_lidar(lidar_point=edges_points['left_upper_points'])
-    best_ratio_line_right_lower = ransac_line_in_lidar(lidar_point=edges_points['right_lower_points'])
-    best_ratio_line_right_upper = ransac_line_in_lidar(lidar_point=edges_points['right_upper_points'])
+    best_ratio_line_left_lower = ransac_line_in_lidar(lidar_point=denoised_edges_points['left_lower_points'])
+    best_ratio_line_left_upper = ransac_line_in_lidar(lidar_point=denoised_edges_points['left_upper_points'])
+    best_ratio_line_right_lower = ransac_line_in_lidar(lidar_point=denoised_edges_points['right_lower_points'])
+    best_ratio_line_right_upper = ransac_line_in_lidar(lidar_point=denoised_edges_points['right_upper_points'])
 
-    denoised_edges_centroid = {'left_lower_points': np.mean(edges_points['left_lower_points'], axis=0),
-                      'left_upper_points': np.mean(edges_points['left_upper_points'], axis=0),
-                      'right_lower_points': np.mean(edges_points['right_lower_points'], axis=0), 
-                      'right_upper_points': np.mean(edges_points['right_upper_points'], axis=0)}
+    denoised_edges_centroid = {'left_lower_points': np.mean(denoised_edges_points['left_lower_points'], axis=0),
+                      'left_upper_points': np.mean(denoised_edges_points['left_upper_points'], axis=0),
+                      'right_lower_points': np.mean(denoised_edges_points['right_lower_points'], axis=0), 
+                      'right_upper_points': np.mean(denoised_edges_points['right_upper_points'], axis=0)}
 
     left_lower_equation = best_ratio_line_left_lower['line_equation']
     left_upper_equation = best_ratio_line_left_upper['line_equation']
@@ -270,7 +270,7 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     plt_images['point_cloud_mapped_on_line_equations'] = np.copy(plt_img)
     plt_img = show_point_cloud(point_cloud=[point_cloud_mapped_on_lines, dic_point_border['border_point_cloud']], marker='o', title='Points on Calibration Target Edges')
     plt_images['points_on_calibration_target_edges'] = np.copy(plt_img)
-    plt_img = show_point_cloud(point_cloud=[edges_points['left_lower_points'], edges_points['left_upper_points'], edges_points['right_lower_points'], edges_points['right_upper_points']], marker='o', title='Left Lower, Left Upeer, Right Lower and Right Upper Points on Edges')
+    plt_img = show_point_cloud(point_cloud=[denoised_edges_points['left_lower_points'], denoised_edges_points['left_upper_points'], denoised_edges_points['right_lower_points'], denoised_edges_points['right_upper_points']], marker='o', title='Left Lower, Left Upeer, Right Lower and Right Upper Points on Edges')
     plt_images['points_on_edges'] = np.copy(plt_img)
 
     left_lower_pointcloud = generate_point_line(line_equation=left_lower_equation)
@@ -289,4 +289,4 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     all_edges_equations = {'line_equation_left_lower': left_lower_equation, 'line_equation_left_upper': left_upper_equation,
             'line_equation_right_lower': right_lower_equation, 'line_equation_right_upper': right_upper_equation}
 
-    return all_edges_equations, denoised_plane_centroid, denoised_edges_centroid, plt_images
+    return all_edges_equations, denoised_plane_centroid, denoised_edges_centroid, plt_images, denoised_edges_points
