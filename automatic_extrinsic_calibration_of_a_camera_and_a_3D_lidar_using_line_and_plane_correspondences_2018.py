@@ -149,10 +149,13 @@ def cost_function_one_pose(
     lidar_plane_points,
     lidar_edges_points
 ):
-    # rotation matrix and translation vector
-    rotation_matrix = x[0:9]
-    rotation_matrix = np.reshape(rotation_matrix, newshape=(3, 3))
-    translation_vector = x[9:12]
+    # rotation vector
+    rotation_vector = x[0:3]
+    # convert rotation vector to rotation matrix
+    rotation_matrix, _ = cv.Rodrigues(src=rotation_vector)
+
+    # translation vector
+    translation_vector = x[3:6]
     translation_vector = np.reshape(translation_vector, newshape=(3, 1))
 
     # normal vector and d of plane in camera coordinate (ax+by+cz+d=0)
@@ -250,8 +253,15 @@ def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_pl
         lidar_edges_centroid=lidar_edges_centroid
         )
 
-    # refind initial estimated R and t
-    x0 = estimated_rotation_matrix.flatten().tolist() + estimated_translation.flatten().tolist() 
+    # refine initial estimated R and t
+    
+    # convert rotation matrix to rotation vector
+    rotation_vec, _ = cv.Rodrigues(src=estimated_rotation_matrix)
+    rotation_vec = rotation_vec.T
+    rotation_vec = rotation_vec.tolist()
+    rotation_vec = rotation_vec[0]
+
+    x0 = rotation_vec + estimated_translation.flatten().tolist() 
     fun = lambda x: cost_function_one_pose(
         x=x,
         camera_coordinate_plane_equation=camera_coordinate_plane_equation,
@@ -260,9 +270,10 @@ def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_pl
         lidar_edges_points=lidar_points_on_edges
     )
     result = least_squares(fun=fun, x0=x0)
-    rotation_matrix = result.x[0:9]
+    rotation_vec = result.x[0:3]
+    rotation_matrix, _ = cv.Rodrigues(src=rotation_vec)
     rotation_matrix = np.reshape(rotation_matrix, newshape=(3,3))
-    translation_vec = result.x[9:12]
+    translation_vec = result.x[3:6]
     translation_vec = np.reshape(translation_vec, newshape=(3,1))
 
     print('=' * 30)
