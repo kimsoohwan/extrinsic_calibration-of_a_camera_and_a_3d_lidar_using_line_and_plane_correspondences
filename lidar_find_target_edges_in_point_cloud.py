@@ -197,13 +197,15 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
 
     # convert to numpy
     point_cloud = np.copy(lidar_points)
+    noisy_plane_points = np.copy(lidar_points)
 
     # map points to plane
     projected_point_cloud = map_points_to_plane(point_cloud=point_cloud, plane_equation=plane_equation)
 
     # find different lines
     #lines = find_different_lines(point_cloud=projected_point_cloud, maximim_distance_two_consecutive_points_in_ray=maximim_distance_two_consecutive_points_in_ray)
-    lines = find_different_lines(point_cloud=projected_point_cloud, min_distance_between_lines=100)
+    lines = find_different_lines(point_cloud=projected_point_cloud, min_distance_between_lines=maximim_distance_two_consecutive_points_in_ray)
+    noisy_lines = find_different_lines(point_cloud=noisy_plane_points, min_distance_between_lines=maximim_distance_two_consecutive_points_in_ray)
 
     # find equation of each line in 3D space
     lines_equations = []
@@ -230,9 +232,11 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     denoised_plane_points = np.copy(point_cloud_mapped_on_lines)
 
     dic_point_border = find_points_on_left_right_border(list_point_mapped_on_lines)
+    dic_noisy_point_border = find_points_on_left_right_border(noisy_lines)
 
     # find point on upper and lower edges
     denoised_edges_points = find_upper_and_lower_points_on_edges(points_on_left_border=dic_point_border['left_points'], points_on_right_border=dic_point_border['right_points'])
+    noisy_edges_points = find_upper_and_lower_points_on_edges(points_on_left_border=dic_noisy_point_border['left_points'], points_on_right_border=dic_noisy_point_border['right_points'])
 
     # find equation of edges
     best_ratio_line_left_lower = ransac_line_in_lidar(lidar_point=denoised_edges_points['left_lower_points'])
@@ -290,4 +294,4 @@ def find_edges_of_calibration_target_in_lidar(lidar_points, plane_equation, disp
     all_edges_equations = {'line_equation_left_lower': left_lower_equation, 'line_equation_left_upper': left_upper_equation,
             'line_equation_right_lower': right_lower_equation, 'line_equation_right_upper': right_upper_equation}
 
-    return all_edges_equations, denoised_plane_centroid, denoised_edges_centroid, plt_images, denoised_plane_points, denoised_edges_points
+    return all_edges_equations, denoised_plane_centroid, denoised_edges_centroid, plt_images, denoised_plane_points, denoised_edges_points, noisy_plane_points, noisy_edges_points

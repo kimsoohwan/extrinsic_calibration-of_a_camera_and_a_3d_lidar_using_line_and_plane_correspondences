@@ -12,7 +12,7 @@ def plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud, maxim
     best_ratio_plane = ransac_plane_in_lidar(lidar_point=lidar_point_cloud)
     
     # find plane's (calibration target) edges equation
-    dic_line_equations, denoised_plane_centroid, dic_denoised_edges_centroid, images_edges_process, denoised_plane_points, denoised_edges_points = find_edges_of_calibration_target_in_lidar(
+    dic_line_equations, denoised_plane_centroid, dic_denoised_edges_centroid, images_edges_process, denoised_plane_points, denoised_edges_points, noisy_plane_points, noisy_edges_points = find_edges_of_calibration_target_in_lidar(
                                 lidar_points=lidar_point_cloud,
                                 plane_equation=best_ratio_plane['plane_equation'],
                                 display=display,
@@ -24,7 +24,9 @@ def plane_equation_and_edges_equation_lidar_point_cloud(lidar_point_cloud, maxim
             'edges_equation':dic_line_equations, 
             'edges_centroid': dic_denoised_edges_centroid,
             'denoised_plane_points': denoised_plane_points,
-            'denoised_edges_points': denoised_edges_points, 
+            'denoised_edges_points': denoised_edges_points,
+            'noisy_plane_points': noisy_plane_points,
+            'noisy_edges_points': noisy_edges_points, 
             'description':description}, images_edges_process
 
 if __name__ == '__main__':

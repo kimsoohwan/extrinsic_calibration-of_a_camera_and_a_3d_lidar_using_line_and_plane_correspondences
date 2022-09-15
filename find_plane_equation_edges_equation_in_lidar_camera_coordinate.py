@@ -85,6 +85,8 @@ def calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(
             'lidar_edges_centroid': plane_edges_equation['edges_centroid'],
             'lidar_denoised_edges_points': plane_edges_equation['denoised_edges_points'],
             'lidar_denoised_plane_points': plane_edges_equation['denoised_plane_points'],
+            'lidar_noisy_edges_points': plane_edges_equation['noisy_edges_points'],
+            'lidar_noisy_plane_points': plane_edges_equation['noisy_plane_points'],
             'image_process': image_process_1,
             'description': 'plane equation: ax+by+cz+d=0, each line equation: p0 a point on line and t the direction vector'}
 
