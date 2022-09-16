@@ -370,19 +370,6 @@ def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_pl
         rotation_matrix = np.reshape(rotation_matrix, newshape=(3,3))
         translation_vec = result.x[9:12]
         translation_vec = np.reshape(translation_vec, newshape=(3,1))
-    
-    
-
-    print('=' * 30)
-    print('Initial Estimated Rotation Matrix:')
-    print(estimated_rotation_matrix)
-    print('Initial Estimated Translation Matrix:')
-    print(estimated_translation)
-    print('Rotation Matrix:')
-    print(rotation_matrix)
-    print('Translation Matrix:')
-    print(translation_vec)
-    print('=' * 30)
 
     return estimated_rotation_matrix, estimated_translation, rotation_matrix, translation_vec
 
@@ -512,6 +499,17 @@ if __name__ == '__main__':
         keep_rotation_matrix_orthogonal=False
     )
 
+    print('=' * 30)
+    print('Initial Estimated Rotation Matrix:')
+    print(init_r)
+    print('Initial Estimated Translation Matrix:')
+    print(init_t)
+    print('Rotation Matrix:')
+    print(r)
+    print('Translation Matrix:')
+    print(t)
+    print('=' * 30)
+
     # point clould points of calibrariotion target on image
     points_in_image, img_lidar_points = lidar_points_in_image(
         rgb_image=rgb_image,
@@ -530,7 +528,5 @@ if __name__ == '__main__':
         t_lidar_to_camera_coordinate=t
     )
 
-    plt.figure()
-    plt.imshow(img_lidar_points)
     plt.show()
 
