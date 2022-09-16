@@ -142,7 +142,7 @@ def init_estimate_t_one_pose(camera_coordinate_plane_equation, camera_coordinate
     return estimated_t
 
 
-def cost_function_one_pose(
+def cost_function_one_pose_keep_R_orthogonal(
     x,
     camera_coordinate_plane_equation,
     camera_coordinate_edges_equation,
@@ -222,6 +222,82 @@ def cost_function_one_pose(
 
     return total_cost
 
+def cost_function_one_pose_not_keep_R_orthogonal(
+    x,
+    camera_coordinate_plane_equation,
+    camera_coordinate_edges_equation,
+    lidar_plane_points,
+    lidar_edges_points
+):
+    # rotation matrix and translation vector
+    rotation_matrix = x[0:9]
+    rotation_matrix = np.reshape(rotation_matrix, newshape=(3, 3))
+    translation_vector = x[9:12]
+    translation_vector = np.reshape(translation_vector, newshape=(3, 1))
+
+    # normal vector and d of plane in camera coordinate (ax+by+cz+d=0)
+    n_c = camera_coordinate_plane_equation.tolist()[0:3]
+    d_c = camera_coordinate_plane_equation.tolist()[3]
+    
+    # points on calibration target edges in camera coordinate
+    p1_c =  camera_coordinate_edges_equation['left_lower_edge_equation'][0].tolist()
+    p2_c =  camera_coordinate_edges_equation['left_upper_edge_equation'][0].tolist()
+    p3_c =  camera_coordinate_edges_equation['right_upper_edge_equation'][0].tolist()
+    p4_c =  camera_coordinate_edges_equation['right_lower_edge_equation'][0].tolist()
+
+    # direction of calibration target edges in camera coordinate
+    l1_c =  camera_coordinate_edges_equation['left_lower_edge_equation'][1].tolist()
+    l2_c =  camera_coordinate_edges_equation['left_upper_edge_equation'][1].tolist()
+    l3_c =  camera_coordinate_edges_equation['right_upper_edge_equation'][1].tolist()
+    l4_c =  camera_coordinate_edges_equation['right_lower_edge_equation'][1].tolist()
+
+    # A = I-d.d
+    matrix_A_1 = calculate_A(line_direction=l1_c)
+    matrix_A_2 = calculate_A(line_direction=l2_c)
+    matrix_A_3 = calculate_A(line_direction=l3_c)
+    matrix_A_4 = calculate_A(line_direction=l4_c)
+
+    # convert matrixes to proper size
+    n_c = np.reshape(n_c, newshape=(-1, 1))
+    d_c = np.reshape(d_c, newshape=(-1, 1))
+    p1_c = np.reshape(p1_c, newshape=(-1, 1))
+    p2_c = np.reshape(p2_c, newshape=(-1, 1))
+    p3_c = np.reshape(p3_c, newshape=(-1, 1))
+    p4_c = np.reshape(p4_c, newshape=(-1, 1))
+    lidar_plane_points = np.transpose(lidar_plane_points)
+    lidar_l1_points = np.transpose(lidar_edges_points['left_lower_points'])
+    lidar_l2_points = np.transpose(lidar_edges_points['left_upper_points'])
+    lidar_l3_points = np.transpose(lidar_edges_points['right_upper_points'])
+    lidar_l4_points = np.transpose(lidar_edges_points['right_lower_points'])
+
+    # cost for points of calibration target
+    cost_of_points_on_target = np.dot(n_c.T, np.dot(rotation_matrix, lidar_plane_points)+translation_vector)+d_c 
+    cost_of_points_on_target = np.linalg.norm(cost_of_points_on_target, axis=0) ** 2
+    cost_of_points_on_target = np.mean(cost_of_points_on_target)
+
+    # cost for points of left lower edge of calibration target
+    cost_of_points_on_edge_1 = np.dot(matrix_A_1, (np.dot(rotation_matrix, lidar_l1_points)-p1_c+translation_vector))
+    cost_of_points_on_edge_1 = np.linalg.norm(cost_of_points_on_edge_1, axis=0) ** 2
+    cost_of_points_on_edge_1 = np.mean(cost_of_points_on_edge_1)
+
+    # cost for points of left upper edge of calibration target
+    cost_of_points_on_edge_2 = np.dot(matrix_A_2, (np.dot(rotation_matrix, lidar_l2_points)-p2_c+translation_vector))
+    cost_of_points_on_edge_2 = np.linalg.norm(cost_of_points_on_edge_2, axis=0) ** 2
+    cost_of_points_on_edge_2 = np.mean(cost_of_points_on_edge_2)
+
+    # cost for points of right upper edge of calibration target
+    cost_of_points_on_edge_3 = np.dot(matrix_A_3, (np.dot(rotation_matrix, lidar_l3_points)-p3_c+translation_vector))
+    cost_of_points_on_edge_3 = np.linalg.norm(cost_of_points_on_edge_3, axis=0) ** 2
+    cost_of_points_on_edge_3 = np.mean(cost_of_points_on_edge_3)
+
+    # cost for points of right lower edge of calibration target
+    cost_of_points_on_edge_4 = np.dot(matrix_A_4, (np.dot(rotation_matrix, lidar_l4_points)-p4_c+translation_vector))
+    cost_of_points_on_edge_4 = np.linalg.norm(cost_of_points_on_edge_4, axis=0) ** 2
+    cost_of_points_on_edge_4 = np.mean(cost_of_points_on_edge_4)
+
+    total_cost = cost_of_points_on_target + cost_of_points_on_edge_1 + cost_of_points_on_edge_2 + cost_of_points_on_edge_3 + cost_of_points_on_edge_4 
+
+    return total_cost
 
 def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_plane_correspondences(
     calibration_data,
@@ -232,7 +308,8 @@ def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_pl
     lidar_edges_equation,
     lidar_edges_centroid,
     lidar_points_on_plane,
-    lidar_points_on_edges
+    lidar_points_on_edges,
+    keep_rotation_matrix_orthogonal=True
 ):
     
     # initial estimate for R
@@ -254,27 +331,47 @@ def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_pl
         )
 
     # refine initial estimated R and t
-    
-    # convert rotation matrix to rotation vector
-    rotation_vec, _ = cv.Rodrigues(src=estimated_rotation_matrix)
-    rotation_vec = rotation_vec.T
-    rotation_vec = rotation_vec.tolist()
-    rotation_vec = rotation_vec[0]
 
-    x0 = rotation_vec + estimated_translation.flatten().tolist() 
-    fun = lambda x: cost_function_one_pose(
-        x=x,
-        camera_coordinate_plane_equation=camera_coordinate_plane_equation,
-        camera_coordinate_edges_equation=camera_coordinate_edges_equation,
-        lidar_plane_points=lidar_points_on_plane,
-        lidar_edges_points=lidar_points_on_edges
-    )
-    result = least_squares(fun=fun, x0=x0)
-    rotation_vec = result.x[0:3]
-    rotation_matrix, _ = cv.Rodrigues(src=rotation_vec)
-    rotation_matrix = np.reshape(rotation_matrix, newshape=(3,3))
-    translation_vec = result.x[3:6]
-    translation_vec = np.reshape(translation_vec, newshape=(3,1))
+    if keep_rotation_matrix_orthogonal == True: 
+        # convert rotation matrix to rotation vector
+        rotation_vec, _ = cv.Rodrigues(src=estimated_rotation_matrix)
+        rotation_vec = rotation_vec.T
+        rotation_vec = rotation_vec.tolist()
+        rotation_vec = rotation_vec[0]
+
+        x0 = rotation_vec + estimated_translation.flatten().tolist() 
+        fun = lambda x: cost_function_one_pose_keep_R_orthogonal(
+            x=x,
+            camera_coordinate_plane_equation=camera_coordinate_plane_equation,
+            camera_coordinate_edges_equation=camera_coordinate_edges_equation,
+            lidar_plane_points=lidar_points_on_plane,
+            lidar_edges_points=lidar_points_on_edges
+        )
+    else:
+        x0 = estimated_rotation_matrix.flatten().tolist() + estimated_translation.flatten().tolist() 
+        fun = lambda x: cost_function_one_pose_not_keep_R_orthogonal(
+            x=x,
+            camera_coordinate_plane_equation=camera_coordinate_plane_equation,
+            camera_coordinate_edges_equation=camera_coordinate_edges_equation,
+            lidar_plane_points=lidar_points_on_plane,
+            lidar_edges_points=lidar_points_on_edges
+        )
+    
+    result = least_squares(fun=fun, x0=x0, verbose=2)
+    
+    if keep_rotation_matrix_orthogonal == True:
+        rotation_vec = result.x[0:3]
+        rotation_matrix, _ = cv.Rodrigues(src=rotation_vec)
+        rotation_matrix = np.reshape(rotation_matrix, newshape=(3,3))
+        translation_vec = result.x[3:6]
+        translation_vec = np.reshape(translation_vec, newshape=(3,1))
+    else:
+        rotation_matrix = result.x[0:9]
+        rotation_matrix = np.reshape(rotation_matrix, newshape=(3,3))
+        translation_vec = result.x[9:12]
+        translation_vec = np.reshape(translation_vec, newshape=(3,1))
+    
+    
 
     print('=' * 30)
     print('Initial Estimated Rotation Matrix:')
@@ -411,7 +508,8 @@ if __name__ == '__main__':
         lidar_edges_equation=plane_edges_equations_in_lidar_camera_coordinate['lidar_edges_equation'],
         lidar_edges_centroid=plane_edges_equations_in_lidar_camera_coordinate['lidar_edges_centroid'],
         lidar_points_on_plane=plane_edges_equations_in_lidar_camera_coordinate['lidar_denoised_plane_points'],
-        lidar_points_on_edges=plane_edges_equations_in_lidar_camera_coordinate['lidar_denoised_edges_points']
+        lidar_points_on_edges=plane_edges_equations_in_lidar_camera_coordinate['lidar_denoised_edges_points'],
+        keep_rotation_matrix_orthogonal=False
     )
 
     # point clould points of calibrariotion target on image
