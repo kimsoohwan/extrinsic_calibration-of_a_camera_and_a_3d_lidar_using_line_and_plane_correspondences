@@ -1,20 +1,25 @@
-# Find Plane and lines Equation of A Plane In Pointcloud
+# Calibration of Camera and Lidar with only one pose
 
-The code gets the dimension of the calibration target, a rotation, and a translation vector for moving the target with respect to the coordinate of LiDAR, characteristics of our LiDAR such as (maximum range, error, number of rays, angel between rays in the vertical and horizontal dimension, etc.). Then it calculates the intersection of LiDAR's rays and calibration target.
+This repository contains code for the calibration of the Camera and Lidar with only one pose. The algorithm is based of the following paper with slight changes.
 
-However, in these images, I did not add the noise yet. Also, the size and rotation in visualization may seem incorrect. However, they are correct, and it is a problem of Matplotlib because different axes have different scales.
+> Zhou, Lipu, Zimo Li, and Michael Kaess. "Automatic extrinsic calibration of a camera and a 3d lidar using line and plane correspondences." 2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS). IEEE, 2018.
 
-Step to find plane and line equations of calibration target's edges:
--I generated a noisy point could with a simulator that I wrote. Figure 1
--I found the plane equation with RANSAC, and I projected points to the plane. Figure 2
--I found different lines (arrays) in the point cloud. This part is parameter sensitive and always does not work and selection of good hyper parameter is needed. Figure 3
--For each of those point arrays in the previous part, I found its line equation with RANSAC. Figure 4
--I projected the point cloud's point on the line equations. Figure 6
--I found points of edges. Figure 7
--I found points of left-lower, left-upper, right-lower, and right-upper edges of the calibration target, Figure 8
--I found line equations for each edge of the calibration target with the RANSAC algorithm.
+"Automatic extrinsic calibration of a camera and a 3d lidar using line and plane correspondences" uses line and plane correspondance of calibration target in RGB image and LiDAR point cloud to find rotation and translation matrix to map points from lidar point cloud to camera coordinate.
 
-# Find Points on Edges of Calibration Target in Camera Image
+## Calibration Target
+Our calibration target is a simple checkerboard calibration target like the paper. However, we used yellow tape around it in order to easily find the exterior edges of the calibration target.
 
-The calibration target has yellow tape around itself. We detect a yellow border with color segmentation. Then we do post-processing and remove things, not on calibration target edges. The found border is tick, and we just keep points on outer parts that are precisely on the calibration target border. Then, we divide all points into four groups: points on the left-lower edge, left-upper edge, right-lower edge, and right-upper edge.
+## Small Changes
+There are some small and minor changes in the algorithm. For example, the paper works for one or more poses. However, our code just implemented calibration with one pose. The code can be easily changed to incorporate more changes. Also, one of the formulations in the paper results in a rotation matrix that is not orthonormal. We changed that in a manner that keeps the property. However, both methods are implemented.
+
+## Input/Output/Execute
+An input set and its corresponding output are proved in the `example_real_img_lidar_points` folder. The input is an image, LiDAR points on the calibration target, all LiDAR points, calibration parameter of the camera. For more informatioin about format of inputs, you can see provided input example.
+
+For running the code and testing the code, you can execute this python file: `automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_plane_correspondences_2018.py`
+
+Output of algorithm for example input:
+![alt text](https://github.com/farhad-dalirani/find_normal_vector_plane_pointcloud/blob/main/example_real_img_lidar_points/10-10-2022-16-40-20/img_target_lidar_points.png?raw=true)
+
+![alt text](https://github.com/farhad-dalirani/find_normal_vector_plane_pointcloud/blob/main/example_real_img_lidar_points/10-10-2022-16-40-20/img_scence_lidar_points.png?raw=true)
+
 
