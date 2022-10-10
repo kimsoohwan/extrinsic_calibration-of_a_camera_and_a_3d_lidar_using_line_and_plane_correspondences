@@ -556,6 +556,10 @@ def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_pl
         np.save(os.path.join(save_path, dt_string, 'init_t.npy'), init_t)
         np.save(os.path.join(save_path, dt_string, 'r.npy'), r)
         np.save(os.path.join(save_path, dt_string, 't.npy'), t)
+        np.savetxt(os.path.join(save_path, dt_string, 'init_r.txt'), init_r)
+        np.savetxt(os.path.join(save_path, dt_string, 'init_t.txt'), init_t)
+        np.savetxt(os.path.join(save_path, dt_string, 'r.txt'), r)
+        np.savetxt(os.path.join(save_path, dt_string, 't.txt'), t)
 
         for num_i, img_i in enumerate(plane_edges_equations_in_lidar_camera_coordinate['image_process']):
             try:
