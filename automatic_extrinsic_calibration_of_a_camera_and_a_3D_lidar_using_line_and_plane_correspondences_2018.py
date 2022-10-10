@@ -1,8 +1,11 @@
 import math
+import os
+from datetime import datetime
 
 import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
 from scipy.optimize import least_squares
 
 from find_plane_equation_edges_equation_in_lidar_camera_coordinate import \
@@ -415,13 +418,24 @@ def lidar_points_in_image(
     return points_in_image, img_lidar_points
     
 
-if __name__ == '__main__':
+def automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_plane_correspondences_2018(
+    img_rgb_path,
+    point_cloud_on_target_path,
+    point_cloud_whole_scene_path,
+    calibration_target_path,
+    maximim_distance_two_consecutive_points_in_ray,
+    num_row,
+    num_col,
+    square,
+    display,
+    save_path=None
+    ):
     
     ################################################################
     # Read image
     ################################################################
     # read image
-    img_bgr = cv.imread('/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-1.png')
+    img_bgr = cv.imread(img_rgb_path)
 
     # convert BGR to RGB
     rgb_image = cv.cvtColor(img_bgr, cv.COLOR_BGR2RGB)
@@ -432,20 +446,20 @@ if __name__ == '__main__':
     ################################################################
     
     # point cloud of calibration target
-    point_cloud_target = np.load('example_real_img_lidar_points/selected_points_in_lidar-1.npy')
+    point_cloud_target = np.load(point_cloud_on_target_path)
     # convert to mm
     point_cloud_target *= 1000
 
-    # point cloud of whole scence
-    point_cloud_scene = np.load('example_real_img_lidar_points/selected_points_in_lidar-1_whole_scene.npy')
-    # convert to mm
-    point_cloud_scene *= 1000
+    if point_cloud_whole_scene_path is not None:
+        # point cloud of whole scence
+        point_cloud_scene = np.load(point_cloud_whole_scene_path)
+        # convert to mm
+        point_cloud_scene *= 1000
 
     ################################################################
     # calibration information related to camera
     ################################################################
-    path = '/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/left_camera_calibration_parameters.yaml'
-    calibration_data = read_yaml_file(path=path)
+    calibration_data = read_yaml_file(path=calibration_target_path)
     print("Calibration Parameters:\n", calibration_data)
 
 
@@ -464,13 +478,13 @@ if __name__ == '__main__':
     ################################################################
     plane_edges_equations_in_lidar_camera_coordinate = calculate_plane_equation_edges_equation_in_lidar_camera_coordinate(
                                                             point_cloud=point_cloud_target,
-                                                            maximim_distance_two_consecutive_points_in_ray=100,
+                                                            maximim_distance_two_consecutive_points_in_ray=maximim_distance_two_consecutive_points_in_ray,
                                                             calibration_data=calibration_data,
                                                             rgb_image=rgb_image,
-                                                            num_row=6,
-                                                            num_col=8,
-                                                            square=152,
-                                                            display=False
+                                                            num_row=num_row,
+                                                            num_col=num_col,
+                                                            square=square,
+                                                            display=display
                                                         )
 
     for key in plane_edges_equations_in_lidar_camera_coordinate:
@@ -511,7 +525,7 @@ if __name__ == '__main__':
     print('=' * 30)
 
     # point clould points of calibrariotion target on image
-    points_in_image, img_lidar_points = lidar_points_in_image(
+    points_in_image, img_target_lidar_points = lidar_points_in_image(
         rgb_image=rgb_image,
         point_cloud=point_cloud_target,
         calibration_data=calibration_data,
@@ -519,14 +533,97 @@ if __name__ == '__main__':
         t_lidar_to_camera_coordinate=t
     )
     
-    # point clould points of whole scene on image
-    points_in_image, img_lidar_points = lidar_points_in_image(
-        rgb_image=rgb_image,
-        point_cloud=point_cloud_scene,
-        calibration_data=calibration_data,
-        r_lidar_to_camera_coordinate=r,
-        t_lidar_to_camera_coordinate=t
+    if point_cloud_whole_scene_path is not None:
+        # point clould points of whole scene on image
+        points_in_image, img_scence_lidar_points = lidar_points_in_image(
+            rgb_image=rgb_image,
+            point_cloud=point_cloud_scene,
+            calibration_data=calibration_data,
+            r_lidar_to_camera_coordinate=r,
+            t_lidar_to_camera_coordinate=t
+        )
+    else:
+        img_scence_lidar_points = None
+
+
+    if save_path is not None:
+        now = datetime.now()
+        dt_string = now.strftime("%d-%m-%Y-%H-%M-%S")
+
+        os.mkdir(os.path.join(save_path, dt_string))
+
+        np.save(os.path.join(save_path, dt_string, 'init_r.npy'), init_r)
+        np.save(os.path.join(save_path, dt_string, 'init_t.npy'), init_t)
+        np.save(os.path.join(save_path, dt_string, 'r.npy'), r)
+        np.save(os.path.join(save_path, dt_string, 't.npy'), t)
+
+        for num_i, img_i in enumerate(plane_edges_equations_in_lidar_camera_coordinate['image_process']):
+            try:
+                if len(img_i.shape) != 3:
+                    im_temp = Image.fromarray(np.uint8(img_i*255), 'L')
+                else:    
+                    im_temp = Image.fromarray(img_i)
+                im_temp.save(os.path.join(save_path, dt_string, 'image_process_{}.png'.format(num_i)))
+            except:
+
+                continue 
+
+        im_temp = Image.fromarray(img_target_lidar_points)
+        im_temp.save(os.path.join(save_path, dt_string, "img_target_lidar_points.png"))
+
+        if img_scence_lidar_points is not None:
+            im_temp = Image.fromarray(img_scence_lidar_points)
+            im_temp.save(os.path.join(save_path, dt_string, "img_scence_lidar_points.png"))
+
+    return {'initial_r': init_r, 'initial_t': init_t, 'r': r, 't': t,
+            'input_image': img_bgr,
+            'image_process': plane_edges_equations_in_lidar_camera_coordinate['image_process'],
+            'target_lidar_points_projected_image': img_target_lidar_points,
+            'scene_lidar_points_projected_image': img_scence_lidar_points}
+
+
+
+if __name__ == '__main__':
+    
+    all_output = automatic_extrinsic_calibration_of_a_camera_and_a_3D_lidar_using_line_and_plane_correspondences_2018(
+        img_rgb_path='/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/frame-1.png',
+        point_cloud_on_target_path='example_real_img_lidar_points/selected_points_in_lidar-1.npy',
+        point_cloud_whole_scene_path='example_real_img_lidar_points/selected_points_in_lidar-1_whole_scene.npy',
+        calibration_target_path='/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/left_camera_calibration_parameters.yaml',
+        maximim_distance_two_consecutive_points_in_ray=100,
+        num_row=6,
+        num_col=8,
+        square=152,
+        display=False,
+        save_path='/home/farhad-bat/code/find_normal_vector_plane_pointcloud/example_real_img_lidar_points/'
     )
+
+    init_r = all_output['initial_r']
+    init_t = all_output['initial_t']
+    r = all_output['r']
+    t = all_output['t']
+
+
+    print('=' * 30)
+    print('Initial Estimated Rotation Matrix:')
+    print(init_r)
+    print('Initial Estimated Translation Matrix:')
+    print(init_t)
+    print('Rotation Matrix:')
+    print(r)
+    print('Translation Matrix:')
+    print(t)
+    print('=' * 30)
+
+    for img in all_output['image_process']:
+        plt.figure()
+        plt.imshow(img)
+
+    plt.figure()
+    plt.imshow(all_output['target_lidar_points_projected_image'])
+
+    plt.figure()
+    plt.imshow(all_output['scene_lidar_points_projected_image'])
 
     plt.show()
 
